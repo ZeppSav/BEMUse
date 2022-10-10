@@ -140,7 +140,7 @@ set(EIGEN_DIR C:\\MyCodeisHere\\eigen\\)
 Nb. The CMakeLists file is currently only configured to compile the command-line version of BEMUse.
 
 ## Pre-compiled libraries
-BEMUse has been precompiled in a release version if you just want to start using the library. These are pre-packaged with the required libs.
+Pre-built binaries are available on the [releases](https://github.com/ZeppSav/BEMUse/releases) page.
 
 ## Documentation
 
