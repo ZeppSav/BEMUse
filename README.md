@@ -74,7 +74,7 @@ These files are defined below along with the corresponding variables:
 	* [BDRY] Specify the discretisation of elements on the surface of the geometry being investigated;
 	* [IFS] Specify the discretisation of elements on the interior free-surface of the geometry being investigated. This is relevant if the `IFR` feature has been activated;
 	* [EFS] Specify the discretisation of elements on the exterior free-surface of the geometry being investigated. This is only revelant if you wish to inspect the free surface displacement around the geometry.
-* `Dimensions.bemin`- Specify here the dimensions for the template geometries. These have three formats:
+* `Dimensions.bemin`- Specify here the dimensions for the template geometries. These have two formats:
 	* [BDRY] Specify the dimensions of elements on the surface of the geometry being investigated;
 	* [EFS] Specify the dimensions of elements on the exterior free-surface of the geometry being investigated. This is only revelant if you wish to inspect the free surface displacement around the geometry.
 * `Inertia.bemin`- Specify here the inertial parameters of the geometry. These are important for the calculation of the RAOs of the geometry. These include:
@@ -105,7 +105,6 @@ A number of options exist for modifying the visualisation:
 * To snap to an isometric viewing angle double click the left mouse button;
 * To toggle the degree of freedom which is visualised, hold the `Shift` button and use the scroll on your mouse;
 * To toggle the frequency which is being visualised, hold the `Ctrl` button and use the scroll on your mouse;
-* To toggle the degree of freedom which is visualised, hold the `Shift` button and use the scroll on your mouse; 
 * To toggle the incoming wave angle which is being visualised, hold the `Alt` button and use the scroll on your mouse. 
 
 <img src="/img/Wigley.PNG" width=75% height=75%>
