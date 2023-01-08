@@ -12,7 +12,8 @@ inline std::vector<std::string> Split(const std::string &text, char sep)
 {
     std::vector<std::string> tokens;
     std::size_t start = 0, end = 0;
-    while ((end = text.find(sep, start)) != std::string::npos) {
+    while ((end = text.find(sep, start)) != std::string::npos)
+    {
         if (end != start) {
           tokens.push_back(text.substr(start, end - start));
         }
@@ -23,6 +24,25 @@ inline std::vector<std::string> Split(const std::string &text, char sep)
     }
     return tokens;
 }
+
+inline std::vector<std::string> Split2(const std::string &text, char sep1, char sep2)
+{
+    std::vector<std::string> tokens;
+    std::size_t start = 0, end = 0;
+    while ( ((end = text.find(sep1, start)) != std::string::npos) || ((end = text.find(sep2, start)) != std::string::npos))
+    {
+        if (end != start) {
+          tokens.push_back(text.substr(start, end - start));
+        }
+        start = end + 1;
+    }
+    if (end != start) {
+       tokens.push_back(text.substr(start));
+    }
+    return tokens;
+}
+
+inline std::vector<std::string> SplitSpacesTabs(const std::string &text) {return Split2(text,' ','\t');}
 
 //--- Checking string matching
 
@@ -53,5 +73,20 @@ inline std::string PST(std::string str, int NPad=15)
     return String_Copy;
 }
 
+//--- Create directory
+
+#include <string>       // required for std::string
+#include <sys/types.h>  // required for stat.h
+#include <sys/stat.h>   // no clue why required -- man pages say so
+
+inline int CreateDirectory(std::string Path)
+{
+    #if defined(_WIN32)
+        return mkdir(Path.c_str());
+    #else
+        mode_t nMode = 0733; // UNIX style permissions
+        return mkdir(Path.c_str(),nMode);
+    #endif
+}
 
 #endif // BEMUSE_IO_H

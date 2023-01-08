@@ -266,7 +266,39 @@ namespace BEMUse
         StateVector FSNodePos;
         for (int i=0; i<Nodes.size(); i++){
             Vector3 FSPos = Nodes[i]->Position_Global();
-            CReal Psi = B->Aux_Vis_Array[Freq](Nodes[i]->ID,DOF);
+            CReal Psi = B->FS_Rad_Array[Freq](Nodes[i]->ID,DOF);
+//            CReal Psi = B->FS_Scat_Array[Freq](Nodes[i]->ID,DOF);
+            FSNodePos.push_back(FSPos + Vector3(0,0,TFac*Psi.real()));
+        }
+
+        // Vis Panels
+        std::vector<SP_Geo> Els;
+        B->Get_Ext_Elements(Els);
+        if (Els.empty())    return;
+
+        for (int i=0; i<Els.size(); i++){
+            StateVector Vertices;
+            for (int j=0; j<Els[i]->Get_N(); j++) Vertices.push_back(FSNodePos[Els[i]->Get_Node(j)->ID]);
+            Vis_Panel(Vertices,Vector3(0,0,1),WavePanelOpacity);
+            Vis_Outline(Vertices,WaveLineOpacity);
+        }
+    }
+
+    static void Visualise_ScatteredFree_Surface(Boundary *B, int Freq, int Beta, Real Time)
+    {
+        // This visualises the free surface
+        // Collect node positions
+        std::vector<SP_Node> Nodes;
+        B->Get_Ext_Nodes(Nodes);
+        if (Nodes.empty())    return;
+
+        Real TFac = (exp(CReal(0,Time))).real();
+
+        StateVector FSNodePos;
+        for (int i=0; i<Nodes.size(); i++){
+            Vector3 FSPos = Nodes[i]->Position_Global();
+//            CReal Psi = B->FS_Rad_Array[Freq](Nodes[i]->ID,DOF);
+            CReal Psi = B->FS_Scat_Array[Freq](Nodes[i]->ID,Beta);
             FSNodePos.push_back(FSPos + Vector3(0,0,TFac*Psi.real()));
         }
 

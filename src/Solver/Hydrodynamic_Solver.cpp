@@ -6,7 +6,6 @@
 
 namespace BEMUse
 {
-static CReal Im(0.0,1.0);
 
 //--- Problem setup
 void Hydrodynamic_Radiation_Solver::Create_Panels(Boundary *B)
@@ -369,11 +368,10 @@ void Hydrodynamic_Radiation_Solver::Calculate_Hydrostatic_Stiffness_Matrix(Bound
 //--- Solution
 void Hydrodynamic_Radiation_Solver::Solve()
 {
-    // This solve function calculates the hydrodynamic coefficients for a range of freqencies
+    // This solve function calculates the hydrodynamic coefficients for a single frequency
 
     //--- Set simulation parameters
-//    Omega = Frequency*TwoPI;
-    Omega = Frequency;                      // This was required to match the outputs of WAMIT....
+    Omega = Frequency*TwoPIinv;
     if (Omega==0 && IFR)    Omega = 1.0e-3; // Avoid erroneous values for small arguments
 
     Period = 1.0/Frequency;
@@ -399,6 +397,7 @@ void Hydrodynamic_Radiation_Solver::Solve()
         DMat = DSrcMat + DSrcReflMat + DWaveMat;
     }
     PPLU.compute(DMat);                     // Prepare linear solver for solution
+//    CG.compute(DMat);                     // Prepare linear solver for solution
 //    DGMRES.compute(DMat);
 //    GMRES.compute(DMat);
 //    VisMat = DMat;
@@ -406,6 +405,7 @@ void Hydrodynamic_Radiation_Solver::Solve()
     //--- Calc radiation solution   (one solution per DOF)
     CMatrix RHSTemp = SMat*N_k_Mat;      // Source matrix term
     CMatrix Phi_J = PPLU.solve(RHSTemp);                       // Solution using a partial piv Lu decomposition
+//    CMatrix Phi_J = CG.solve(RHSTemp);                       // Solution using a partial piv Lu decomposition
 //    CMatrix Phi_J = DGMRES.solve(RHSTemp);
 //    CMatrix Phi_J = GMRES.solve(RHSTemp);
 
@@ -413,12 +413,13 @@ void Hydrodynamic_Radiation_Solver::Solve()
     Set_Incident_Potential_Mats();
     CMatrix RHSDiff = SMat*(-DPhi_I_DN);
     CMatrix Phi_S = PPLU.solve(RHSDiff);
+//    CMatrix Phi_S = CG.solve(RHSDiff);
 //    CMatrix Phi_S = DGMRES.solve(RHSDiff);
 //    CMatrix Phi_S = GMRES.solve(RHSDiff);
     CMatrix Phi_D = Phi_S+Phi_I;
 
     //--- Discard solutions which are not of interest (only panels on the surface)
-    Phi_J.conservativeResize(NPA,NDOF);          // Radiation potential
+    Phi_J.conservativeResize(NPA,NDOF);         // Radiation potential
     Phi_S.conservativeResize(NPA,NBeta);        // Scatter potential
     Phi_D.conservativeResize(NPA,NBeta);        // Diffraction potential
     Phi_I.conservativeResize(NPA,NBeta);        // Incident potential
@@ -465,7 +466,7 @@ void Hydrodynamic_Radiation_Solver::Solve()
     //--- Calc exterior solution (free surface elevation)
     Prepare_External_Linear_System_Wave_Terms();
     if (!Wave_Nodes.empty()) ExtRadMat =  -Im*Omega/Gravity*(WMatExt + SMatExt)*Phi_J;
-//    if (!Wave_Nodes.empty()) ExtDiffMat = -Im*Omega/Gravity*(WMatExt + SMatExt)*Phi_S;
+    if (!Wave_Nodes.empty()) ExtDiffMat = -Im*Omega/Gravity*(WMatExt + SMatExt)*Phi_S;
 
     //--- Update output files
     Update_Output_File();
@@ -473,7 +474,8 @@ void Hydrodynamic_Radiation_Solver::Solve()
     //--- Store results for visualisation
     RadSolArray.push_back(Phi_J);
     DiffSolArray.push_back(Phi_S);
-    AuxSolArray.push_back(ExtRadMat);
+    FS_Rad_SolArray.push_back(ExtRadMat);
+    FS_Scat_SolArray.push_back(ExtDiffMat);
 }
 
 Real Hydrodynamic_Radiation_Solver::Calc_Root_Finite_Depth(Real &O, Real &H)

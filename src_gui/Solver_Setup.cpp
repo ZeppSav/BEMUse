@@ -47,7 +47,7 @@ void Solver_Setup::on_Conf_Solver_clicked()
     else if (ui->FDiscCos1Button->isChecked()) {for (int i=0; i<FD; i++)    Freqs.push_back(F2 + (F1-F2)*HalfPiCosFac(FD-1-i,FD)); }
     else if (ui->FDiscCos2Button->isChecked()) {for (int i=0; i<FD; i++)    Freqs.push_back(F1 + (F2-F1)*HalfPiCosFac(i,FD)); }
 
-    for (int i=0; i<Freqs.size(); i++) Freqs[i] *= TwoPIinv;        // Convert
+//    for (int i=0; i<Freqs.size(); i++) Freqs[i] *= TwoPIinv;        // Convert
 
     //--- Wave angle list
     Real B1 = ui->BetaLowSet->value();

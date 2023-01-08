@@ -50,18 +50,16 @@ void BEMUser_Interface::paintGL()
 {
     // Clear previous lists
 
+//    glEnable(GL_BLEND);                                     // Disable for opaque elements
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);      // Disable for opaque elements
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glEnable(GL_POINT_SMOOTH);
     glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_MULTISAMPLE);
     glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_NICEST);
-
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_NOTEQUAL);
 
     glLoadIdentity();
     glScaled(zoomScale, zoomScale, zoomScale);
@@ -140,7 +138,11 @@ void BEMUser_Interface::draw_scene()
     if (ShowExteriorFreeSurface)        BEMUse::Visualise_Exterior_FreeSurface_Elements(Boundary);
     if (Sol_Avail && ShowPhiJ)          BEMUse::Visualise_Radiation_Solution(Boundary, FView, DOFView);
     if (Sol_Avail && ShowPhiD)          BEMUse::Visualise_Diffraction_Solution(Boundary, FView, BetaView);
-    if (Sol_Avail && ShowFreeSurface)   BEMUse::Visualise_Free_Surface(Boundary, FView, DOFView, Real(Vis_Timer->elapsed())*TimeFactor);
+
+    glEnable(GL_BLEND);                                     // Disable for opaque elements
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);      // Disable for opaque elements
+    if (Sol_Avail && ShowFreeSurface)           BEMUse::Visualise_Free_Surface(Boundary, FView, DOFView, Real(Vis_Timer->elapsed())*TimeFactor);
+    if (Sol_Avail && ShowScatteredFreeSurface)  BEMUse::Visualise_ScatteredFree_Surface(Boundary, FView, BetaView, Real(Vis_Timer->elapsed())*TimeFactor);
 
     glEndList();
 
@@ -174,7 +176,7 @@ void BEMUser_Interface::wheelEvent(QWheelEvent *event)
         else                    FView = FNew;
 
         // Update message
-        Update_Status("Visualising solution DOF " + std::to_string(DOFView+1) + " at frequency " + StdStringPrec(FreqList[FView],3) + "Hz.");
+        Update_Status("Visualising solution DOF " + std::to_string(DOFView+1) + " at frequency " + StdStringPrec(FreqList[FView],3) + " Hz.");
         update();
     }
     else if (QGuiApplication::queryKeyboardModifiers().testFlag(Qt::ShiftModifier) && Sol_Avail)
@@ -398,14 +400,18 @@ void BEMUser_Interface::Clear_Vis()
     ui->SurfPot->setChecked(false);
     ui->SurfDiff->setChecked(false);
     ui->WaveVis->setChecked(false);
+    ui->WaveVis_2->setChecked(false);
+
     Sol_Avail = false;
     ShowNormals = false;
-    ShowFreeSurface = false;
     ShowPhiJ = false;
     ShowPhiD = false;
     ShowSurfacepanels = false;
     ShowInteriorFreeSurface = false;
     ShowExteriorFreeSurface = false;
+
+    ShowFreeSurface = false;
+    ShowScatteredFreeSurface = false;
 }
 
 //--- Solver configuration
@@ -484,3 +490,46 @@ void BEMUser_Interface::on_Button_Execute_clicked()
     // Initialise worked thread.
     workerThread->start();
 }
+
+//--- Button events
+
+void BEMUser_Interface::on_SurfPot_toggled(bool checked)
+{
+    if (ShowPhiD){
+        ShowPhiD = false;
+        ui->SurfDiff->setChecked(false);
+    }
+    ShowPhiJ = checked;
+    ui->SurfPot->setChecked(checked);
+}
+
+void BEMUser_Interface::on_SurfDiff_toggled(bool checked)
+{
+    if (ShowPhiJ){
+        ShowPhiJ = false;
+        ui->SurfPot->setChecked(false);
+    }
+    ShowPhiD = checked;
+    ui->SurfDiff->setChecked(checked);
+}
+
+void BEMUser_Interface::on_WaveVis_toggled(bool checked)
+{
+    if (ShowScatteredFreeSurface){
+        ShowScatteredFreeSurface = false;
+        ui->WaveVis_2->setChecked(false);
+    }
+    ShowFreeSurface = checked;
+    ui->WaveVis->setChecked(checked);
+}
+
+void BEMUser_Interface::on_WaveVis_2_toggled(bool checked)
+{
+    if (ShowFreeSurface){
+        ShowFreeSurface = false;
+        ui->WaveVis->setChecked(false);
+    }
+    ShowScatteredFreeSurface = checked;
+    ui->WaveVis_2->setChecked(checked);
+}
+

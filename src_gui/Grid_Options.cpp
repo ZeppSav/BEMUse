@@ -75,15 +75,10 @@ void Grid_Options::on_GenerateButton_clicked()
     // This means we should proceed with the generation and preparation of the geometry
     // Finally the geometry is passed to the BEMUser Interface QObject for the next steps
 
-    //--- Jump out if no geometry type has been selected.
-
-    if (GeoType==No_Geo) return;
-
-    //--- Specify geometry type
-
     switch (GeoType)
     {
-        // Template geometries
+        //--- Template geometries
+        case No_Geo:            {return;   break;}  // Jump out if no geometry type has been selected.
         case Semi_Ellipsoid:    {Boundary = new BEMUse::Semi_Ellipsoid();   break;}
         case Ellipsoid:         {Boundary = new BEMUse::Ellipsoid();        break;}
         case Half_Cylinder:     {Boundary = new BEMUse::Half_Cylinder();    break;}
@@ -267,9 +262,9 @@ void Grid_Options::on_ButtonBarge_clicked()
     DimLabsExt[NDimsExt]->setText("Length"); DimLabsExt[NDimsExt]->show(); ExtDimSpins[NDimsExt]->setValue(60.0); ExtDimSpins[NDimsExt]->show(); NDimsExt++;
     DimLabsExt[NDimsExt]->setText("Width"); DimLabsExt[NDimsExt]->show(); ExtDimSpins[NDimsExt]->setValue(40.0); ExtDimSpins[NDimsExt]->show(); NDimsExt++;
 
-    DiscLabs[NDisc]->setText("X");      DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(16);  DiscSpins[NDisc]->show();  NDisc++;
-    DiscLabs[NDisc]->setText("Y");      DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(16);  DiscSpins[NDisc]->show();  NDisc++;
-    DiscLabs[NDisc]->setText("Z");      DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(16);  DiscSpins[NDisc]->show();  NDisc++;
+    DiscLabs[NDisc]->setText("X");      DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(12);  DiscSpins[NDisc]->show();  NDisc++;
+    DiscLabs[NDisc]->setText("Y");      DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(12);  DiscSpins[NDisc]->show();  NDisc++;
+    DiscLabs[NDisc]->setText("Z");      DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(12);  DiscSpins[NDisc]->show();  NDisc++;
     DiscLabsExt[NDiscExt]->setText("X");      DiscLabsExt[NDiscExt]->show(); ExtDiscSpins[NDiscExt]->setValue(32); ExtDiscSpins[NDiscExt]->show();  NDiscExt++;
     DiscLabsExt[NDiscExt]->setText("Y");      DiscLabsExt[NDiscExt]->show(); ExtDiscSpins[NDiscExt]->setValue(32); ExtDiscSpins[NDiscExt]->show();  NDiscExt++;
 

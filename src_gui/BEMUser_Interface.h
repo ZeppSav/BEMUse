@@ -68,7 +68,7 @@ public:
     void run() override
     {
         QString result;
-//        Timer Clock;
+        timestamp_t t0 = get_timestamp();               // Begin clock
         for (int i=0; i<FreqList.size(); i++)
         {
             Solver->Set_Real(FreqList[i]);
@@ -76,12 +76,15 @@ public:
             analysis_progress(i+1,FreqList.size());
         }
         emit analysis_complete(result);
-//        Clock.Print_Time_Single();
 
         // Store visualisation objects
         StdAppend(Boundary->RadSolArray,Solver->RadSolArray);
         StdAppend(Boundary->DiffSolArray,Solver->DiffSolArray);
-        StdAppend(Boundary->Aux_Vis_Array,Solver->AuxSolArray);
+        StdAppend(Boundary->FS_Rad_Array,Solver->FS_Rad_SolArray);
+        StdAppend(Boundary->FS_Scat_Array,Solver->FS_Scat_SolArray);
+
+        Real Tsec = (get_timestamp() - t0) / 1000.0L;   // Record end time
+        std::cout << "Execution complete. Time taken: " << Tsec << " ms." << std::endl;
 
         // Call finished in order to delete this thread.
         emit finished();
@@ -129,12 +132,15 @@ private:
     int BetaTot = 0;    // Which DOF do we want to view?
 
     bool ShowNormals = false;
-    bool ShowFreeSurface = false;
     bool ShowPhiJ = false;
     bool ShowPhiD = false;
     bool ShowSurfacepanels = true;
     bool ShowInteriorFreeSurface = false;
     bool ShowExteriorFreeSurface = false;
+
+    // Free surface visulisation vars
+    bool ShowFreeSurface = false;
+    bool ShowScatteredFreeSurface = false;
 
     QTimer *Vis_Trigger;
     QElapsedTimer *Vis_Timer;
@@ -161,15 +167,16 @@ private slots:      // Visualisation actions
 
     //--- Buttons
     void on_NormVis_toggled(bool checked)           {ShowNormals = checked;}
-    void on_SurfPot_toggled(bool checked)           {ShowPhiJ = checked;}
-    void on_SurfDiff_toggled(bool checked)          {ShowPhiD = checked;}
-    void on_WaveVis_toggled(bool checked)           {ShowFreeSurface = checked;}
     void on_BoundaryVis_toggled(bool checked)       {ShowSurfacepanels = checked;}
     void on_IFSVis_toggled(bool checked)            {ShowInteriorFreeSurface = checked;}
     void on_EFSVis_toggled(bool checked)            {ShowExteriorFreeSurface = checked;}
     void on_ExportButton_clicked();
     void on_ImportButton_clicked();
     void on_GeoDelete_clicked();
+    void on_SurfPot_toggled(bool checked);
+    void on_SurfDiff_toggled(bool checked);
+    void on_WaveVis_toggled(bool checked);
+    void on_WaveVis_2_toggled(bool checked);
 
 public:
     BEMUser_Interface(QOpenGLWidget *parent = 0);

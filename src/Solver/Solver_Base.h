@@ -67,7 +67,8 @@ protected:
     void Specify_BC_Bilin_Pans(Boundary *B);
 
     //--- Output files
-    std::string OutputFile = "Output/BEMUse_Outputs";
+    std::string OutputDirectory = "Output";
+    std::string OutputPath = "Output/BEMUse_Outputs";
 
 public:
 
@@ -83,7 +84,7 @@ public:
     virtual void Set_Reals(std::vector<Real> &D)        {}
     virtual void Set_Flags(std::vector<bool> &D)        {}
     virtual void Set_Environment(std::vector<Real> &D)  {}
-    virtual void Set_OutputFilePath(std::string &D)     {OutputFile = "Output/" + D;}
+    virtual void Set_OutputFilePath(std::string &D)     {OutputPath = OutputDirectory + "/" + D;}
 
     //--- Setup
     virtual void Setup(Boundary *B)                 {}
@@ -103,9 +104,10 @@ public:
     virtual CMatrix Get_VisMatrix()                 {}
 
     //--- Vars for visualisation
-    std::vector<CMatrix> RadSolArray;           // Solution array
-    std::vector<CMatrix> DiffSolArray;          // Solution array
-    std::vector<CMatrix> AuxSolArray;           // Solution array
+    std::vector<CMatrix> RadSolArray;           // Solution array radiation potential
+    std::vector<CMatrix> DiffSolArray;          // Solution array scattering potential
+    std::vector<CMatrix> FS_Rad_SolArray;       // Solution array Free surface elevation due to radiation
+    std::vector<CMatrix> FS_Scat_SolArray;      // Solution array Free surface elevation due to scattering
 
 };
 

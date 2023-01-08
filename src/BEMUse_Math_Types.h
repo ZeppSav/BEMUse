@@ -72,6 +72,18 @@ static void StdAppend(std::vector<T>& lhs, const std::vector<T>& rhs)       {lhs
 template <class T>          // Hack to avoid using insert everytime
 static void StdAppend(std::vector<T>& lhs, const std::vector<T>& rhs, const int &P1, const int &P2)     {lhs.insert(lhs.end(),rhs.begin()+P1, rhs.begin()+P2);}
 
+//-------- Time stamp
+
+#include <sys/time.h>
+typedef unsigned long long timestamp_t;
+
+static timestamp_t get_timestamp ()
+{
+  struct timeval now;
+  gettimeofday (&now, NULL);
+  return  now.tv_usec + (timestamp_t)now.tv_sec * 1000000;
+}
+
 //---- Mathematical Constants
 
 static Real const  EUL          =  0.5772156649;
@@ -83,6 +95,7 @@ static Real const  FourPIinv    =  0.25/M_PI;
 
 static Real const  D2R          =  M_PI/180;
 static Real const  R2D          =  180/M_PI;
+static CReal const Im(0.0,1.0);
 
 //---- Kinematic parameters
 

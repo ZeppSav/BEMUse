@@ -156,8 +156,10 @@ public:
 
     //--- Visualisation Arrays
 //    StdVector Vis_Points;
-    std::vector<CMatrix> RadSolArray,DiffSolArray;
-    std::vector<CMatrix> Aux_Vis_Array;
+    std::vector<CMatrix> RadSolArray;
+    std::vector<CMatrix> DiffSolArray;
+    std::vector<CMatrix> FS_Rad_Array;
+    std::vector<CMatrix> FS_Scat_Array;
 
     //--- Destructor
     ~Boundary();

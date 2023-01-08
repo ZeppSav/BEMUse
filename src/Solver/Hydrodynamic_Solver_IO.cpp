@@ -13,8 +13,10 @@ namespace BEMUse
 void Hydrodynamic_Radiation_Solver::Generate_Output_File(Boundary *B)
 {
     // This creates the output files and fills preliminary data for the boundary / simulation.
+    CreateDirectory(OutputDirectory);   // Create directory if it doesn't yet exist
+    CreateDirectory(OutputPath);        // Create output file path if it doesn't yet exist
     Generate_Output_File_BEMUse(B);     // Generates output in BEMUse format
-    Generate_Output_File_WAMIT(B);     // Generates output in WAMIT format
+    Generate_Output_File_WAMIT(B);      // Generates output in WAMIT format
 }
 
 void Hydrodynamic_Radiation_Solver::Update_Output_File()
@@ -31,7 +33,7 @@ void Hydrodynamic_Radiation_Solver::Generate_Output_File_BEMUse(Boundary *B)
     // The BEMUse output files is tailored to simplicity and succintness.
     // Furthermore, an attempt is made to store all data in a single file to simplify postprocessing.
 
-    std::string FilePath = OutputFile + ".bem";
+    std::string FilePath = OutputPath + ".bem";
     std::ofstream file;
 
     file.open(FilePath, std::ofstream::out | std::ofstream::trunc); // Clear!
@@ -149,7 +151,7 @@ void Hydrodynamic_Radiation_Solver::Generate_Output_File_BEMUse(Boundary *B)
 void Hydrodynamic_Radiation_Solver::Update_Output_File_BEMUse()
 {
     // This updates the output file using the BEMUse format
-    std::string FilePath = OutputFile + ".bem";
+    std::string FilePath = OutputPath + ".bem";
     std::ofstream file;
 
     file.open(FilePath, std::ios_base::app);
@@ -355,19 +357,19 @@ void Hydrodynamic_Radiation_Solver::Generate_Output_File_WAMIT(Boundary *B)
     // A nice feature is prepared below:
 
     std::vector<std::string> Paths;
-    Paths.push_back(OutputFile + ".1");     // Radiation force file
-    Paths.push_back(OutputFile + ".2");     // Haskind force file
-    Paths.push_back(OutputFile + ".2fk");   // Haskind force file (Froude-Krylov)
-    Paths.push_back(OutputFile + ".2sc");   // Haskind force file (Scattering)
-//    Paths.push_back(OutputFile + ".3");     // Diffraction force file
-//    Paths.push_back(OutputFile + ".3fk");   // Diffraction force file (Froude-Krylov)
-//    Paths.push_back(OutputFile + ".3sc");   // Diffraction force file (Scattering)
-    Paths.push_back(OutputFile + ".4");     // Response amplitude operator (Haskind force)
-    Paths.push_back(OutputFile + ".6");     // Wave elevations
-    Paths.push_back(OutputFile + ".hst");   // Hydrostatic stiffness matrix
-    Paths.push_back(OutputFile + ".mmx");   // Mass matrix
-    Paths.push_back(OutputFile + "_KochinRad.bem");     // Kochin function radiation terms
-    Paths.push_back(OutputFile + "_KochinDiff.bem");    // Kochin function diffraction terms
+    Paths.push_back(OutputPath + ".1");     // Radiation force file
+    Paths.push_back(OutputPath + ".2");     // Haskind force file
+    Paths.push_back(OutputPath + ".2fk");   // Haskind force file (Froude-Krylov)
+    Paths.push_back(OutputPath + ".2sc");   // Haskind force file (Scattering)
+//    Paths.push_back(OutputPath + ".3");     // Diffraction force file
+//    Paths.push_back(OutputPath + ".3fk");   // Diffraction force file (Froude-Krylov)
+//    Paths.push_back(OutputPath + ".3sc");   // Diffraction force file (Scattering)
+    Paths.push_back(OutputPath + ".4");     // Response amplitude operator (Haskind force)
+    Paths.push_back(OutputPath + ".6");     // Wave elevations
+    Paths.push_back(OutputPath + ".hst");   // Hydrostatic stiffness matrix
+    Paths.push_back(OutputPath + ".mmx");   // Mass matrix
+    Paths.push_back(OutputPath + "_KochinRad.bem");     // Kochin function radiation terms
+    Paths.push_back(OutputPath + "_KochinDiff.bem");    // Kochin function diffraction terms
 
     std::ofstream file;
 
@@ -378,7 +380,7 @@ void Hydrodynamic_Radiation_Solver::Generate_Output_File_WAMIT(Boundary *B)
     }
 
     // Store the hydrostatic stiffness matrix
-    std::string HSTPath = OutputFile + ".hst";
+    std::string HSTPath = OutputPath + ".hst";
     file.open(HSTPath);
     if (file.is_open())
     {
@@ -389,7 +391,7 @@ void Hydrodynamic_Radiation_Solver::Generate_Output_File_WAMIT(Boundary *B)
     file.close();
 
     // Store the mass matrix
-    std::string MMXPath = OutputFile + ".mmx";
+    std::string MMXPath = OutputPath + ".mmx";
     file.open(MMXPath);
     if (file.is_open())
     {
@@ -411,7 +413,7 @@ void Hydrodynamic_Radiation_Solver::Generate_Output_File_WAMIT(Boundary *B)
     {
         std::vector<Vector3> WaveNodePos;
         for (SP_Node N: Wave_Nodes) WaveNodePos.push_back(N->Position_Global());
-        std::string WEPath = OutputFile + "_WaveElPos.bem";
+        std::string WEPath = OutputPath + "_WaveElPos.bem";
         file.open(WEPath);
         if (file.is_open()){
             for (int i=0; i<WaveNodePos.size(); i++) file << i << "     " << PFS(WaveNodePos[i](0)) << PFS(WaveNodePos[i](1)) << std::endl;
@@ -427,7 +429,7 @@ void Hydrodynamic_Radiation_Solver::Update_Output_File_WAMIT()
     std::ofstream file;
 
     // Update the radiation forces
-    std::string RadPath = OutputFile + ".1";
+    std::string RadPath = OutputPath + ".1";
     file.open(RadPath, std::ios_base::app);
     if (file.is_open())
     {
@@ -442,7 +444,7 @@ void Hydrodynamic_Radiation_Solver::Update_Output_File_WAMIT()
     file.close();
 
     // Update the excitation forces
-    std::string DiffPath = OutputFile + ".2";
+    std::string DiffPath = OutputPath + ".2";
     file.open(DiffPath, std::ios_base::app);
     if (file.is_open())
     {
@@ -459,7 +461,7 @@ void Hydrodynamic_Radiation_Solver::Update_Output_File_WAMIT()
     file.close();
 
     // Update the Haskind Froude-Krylov forces
-    std::string DiffPathFK = OutputFile + ".2fk";
+    std::string DiffPathFK = OutputPath + ".2fk";
     file.open(DiffPathFK,std::ios_base::app);
     if (file.is_open())
     {
@@ -476,7 +478,7 @@ void Hydrodynamic_Radiation_Solver::Update_Output_File_WAMIT()
     file.close();
 
     // Update the Haskind scattering forces
-    std::string DiffPathSC = OutputFile + ".2sc";
+    std::string DiffPathSC = OutputPath + ".2sc";
     file.open(DiffPathSC,std::ios_base::app);
     if (file.is_open())
     {
@@ -493,7 +495,7 @@ void Hydrodynamic_Radiation_Solver::Update_Output_File_WAMIT()
     file.close();
 
     // Update the response amplitude operator terms
-    std::string DiffPathRAO = OutputFile + ".4";
+    std::string DiffPathRAO = OutputPath + ".4";
     file.open(DiffPathRAO,std::ios_base::app);
     if (file.is_open())
     {
@@ -509,7 +511,7 @@ void Hydrodynamic_Radiation_Solver::Update_Output_File_WAMIT()
     file.close();
 
     // Update the kochin function for the radiation potential
-    std::string DiffPathKochRad = OutputFile + "_KochinRad.bem";
+    std::string DiffPathKochRad = OutputPath + "_KochinRad.bem";
     file.open(DiffPathKochRad,std::ios_base::app);
     if (file.is_open())
     {
@@ -527,7 +529,7 @@ void Hydrodynamic_Radiation_Solver::Update_Output_File_WAMIT()
     file.close();
 
     // Update the kochin function for the radiation potential
-    std::string DiffPathKochDiff = OutputFile + "_KochinDiff.bem";
+    std::string DiffPathKochDiff = OutputPath + "_KochinDiff.bem";
     file.open(DiffPathKochDiff,std::ios_base::app);
     if (file.is_open())
     {
@@ -547,7 +549,7 @@ void Hydrodynamic_Radiation_Solver::Update_Output_File_WAMIT()
     // Specify free surface wave elevation output files
     if (!Wave_Nodes.empty())    // No external nodes, ignore!
     {
-        std::string WERadPath = OutputFile + ".6r";
+        std::string WERadPath = OutputPath + ".6r";
         file.open(WERadPath,std::ios_base::app);
         if (file.is_open())
         {
