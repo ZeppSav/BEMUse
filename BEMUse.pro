@@ -9,8 +9,7 @@ TARGET = BEMUse
 #----------------------------------------------
 # Configuration flags
 #----------------------------------------------
-
-CONFIG += c++17
+CONFIG += c++20
 
 #---Optimise flags
 
@@ -95,8 +94,7 @@ HEADERS  += \
 #-------------------
 
 DEFINES += BEMUse_GUI   # Compile the GUI
-QT      += core gui
-QT      += widgets
+QT       += gui opengl widgets openglwidgets
 
 LIBS += -lOpengl32      # include openGL library for visualisation
 
