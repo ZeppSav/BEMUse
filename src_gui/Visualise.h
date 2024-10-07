@@ -27,6 +27,11 @@
 
 #include "src/Boundary/Boundary_Base.h"
 #include "src/Geometry/Panel.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <GL/glu.h>
 
 namespace BEMUse
