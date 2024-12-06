@@ -21,11 +21,11 @@ void Ellipsoid::Generate_Nodes()
     // The origin of the coordinate system is at [X,Y,Z] = [0,0,0]
 
     if (!Global_CS)    Global_CS = new CoordSys();
-//    if (!Inertial_CS)  Inertial_CS = new CoordSys(Global_CS);
+    //    if (!Inertial_CS)  Inertial_CS = new CoordSys(Global_CS);
 
     Vector3 P(0,0,Depth);
     Quat O(Quat::Identity());
-//    Quat O(Eigen::AngleAxisf(0.5*PI, UnitY));// = Quat(Eigen::AngleAxisf(0.5*PI, UnitY));
+    //    Quat O(Eigen::AngleAxisf(0.5*PI, UnitY));// = Quat(Eigen::AngleAxisf(0.5*PI, UnitY));
     if (!Inertial_CS)  Inertial_CS = new CoordSys(Global_CS,O,P); // Rotated
 
     //---- Generate coordinates
@@ -44,7 +44,11 @@ void Ellipsoid::Generate_Nodes()
         for (int j = 0; j<NAR; j++)     // Azimuth angle u must sweep from 0-2PI
         {
             Real u = j*TwoPI/NAR;
-//            Vector3 BP  ( a*cos(u)*sinv + Origin(0), b*sin(u)*sinv + Origin(1), c*cosv + Origin(2) + Depth);
+
+            //--- Mod for triangular panels
+            if (i%2==0) u += 0.5*TwoPI/NAR;
+            //------------------------------
+
             Vector3 BP  ( a*cos(u)*sinv, b*sin(u)*sinv, c*cosv);
             Vector3 dPdu(-a*sin(u)*sinv, b*cos(u)*sinv, 0);         dPdu.normalize();
             Vector3 dPdv( a*cos(u)*cosv, b*sin(u)*cosv,-c*sinv);    dPdv.normalize();
@@ -66,19 +70,19 @@ void Ellipsoid::Generate_Nodes()
     // Set node ID
     for (int i=0; i<Nodes.size(); i++)  Nodes[i]->ID = i;
 
-//    // Calculate analytical solution parameters
-//    int Xmax = 100;
-//    Real dX = 0.00001;
-//    alpha0 = 0.0;
-//    beta0 = 0.0;
-//    for (Real x=0.5*dX; x<Xmax; x+=dX)
-//    {
-//        Real delconst = a*b*c*dX/sqrt((a*a+x)*(b*b+x)*(c*c+x));
-//        alpha0 += delconst/(a*a+x);
-//        beta0 += delconst/(b*b+x);
-//    }
-//    gamma0 = 2.0-alpha0-beta0;
-//    std::cout << "Ellipsoid constants given by: alpha0 = " << alpha0 << ", beta0 = " << beta0 << ",  gamma0 = " << gamma0 << std::endl;
+    //    // Calculate analytical solution parameters
+    //    int Xmax = 100;
+    //    Real dX = 0.00001;
+    //    alpha0 = 0.0;
+    //    beta0 = 0.0;
+    //    for (Real x=0.5*dX; x<Xmax; x+=dX)
+    //    {
+    //        Real delconst = a*b*c*dX/sqrt((a*a+x)*(b*b+x)*(c*c+x));
+    //        alpha0 += delconst/(a*a+x);
+    //        beta0 += delconst/(b*b+x);
+    //    }
+    //    gamma0 = 2.0-alpha0-beta0;
+    //    std::cout << "Ellipsoid constants given by: alpha0 = " << alpha0 << ", beta0 = " << beta0 << ",  gamma0 = " << gamma0 << std::endl;
 }
 
 void Ellipsoid::Generate_Elements()
@@ -94,12 +98,36 @@ void Ellipsoid::Generate_Elements()
                                                                                         Nodes[Node_ID(i,1)]));
 
     // Central quadratic elements
+    // for (int z=1; z<NZ-1; z++){
+    //     for (int i=0; i<NA; i++)    Elements.push_back(std::make_shared<Quad_Element>(  Nodes[Node_ID(i,z)],
+    //                                                                                     Nodes[Node_ID(i+1,z)],
+    //                                                                                     Nodes[Node_ID(i+1,z+1)],
+    //                                                                                     Nodes[Node_ID(i,z+1)]));
+    // }
+
+    //--- Mod for triangular panels
     for (int z=1; z<NZ-1; z++){
-        for (int i=0; i<NA; i++)    Elements.push_back(std::make_shared<Quad_Element>(  Nodes[Node_ID(i,z)],
-                                                                                        Nodes[Node_ID(i+1,z)],
-                                                                                        Nodes[Node_ID(i+1,z+1)],
-                                                                                        Nodes[Node_ID(i,z+1)]));
+        for (int i=0; i<NA; i++){
+             if (z%2==0){
+                Elements.push_back(std::make_shared<Tri_Element>(Nodes[Node_ID(i,z)],
+                                                                 Nodes[Node_ID(i+1,z+1)],
+                                                                 Nodes[Node_ID(i+1,z)]));
+                Elements.push_back(std::make_shared<Tri_Element>(Nodes[Node_ID(i+1,z)],
+                                                                 Nodes[Node_ID(i+1,z+1)],
+                                                                 Nodes[Node_ID(i+2,z+1)]));
+             }
+             else
+             {
+                 Elements.push_back(std::make_shared<Tri_Element>(Nodes[Node_ID(i,z)],
+                                                                  Nodes[Node_ID(i,z+1)],
+                                                                  Nodes[Node_ID(i+1,z)]));
+                 Elements.push_back(std::make_shared<Tri_Element>(Nodes[Node_ID(i+1,z)],
+                                                                  Nodes[Node_ID(i,z+1)],
+                                                                  Nodes[Node_ID(i+1,z+1)]));
+             }
+        }
     }
+    //------------------------------
 
     // Nose (triangular elements)
     for (int i=0; i<NA; i++)        Elements.push_back(std::make_shared<Tri_Element>(   Nodes[Node_ID(i+1,NZ-1)],

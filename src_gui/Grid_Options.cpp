@@ -218,10 +218,10 @@ void Grid_Options::on_ButtonEllipsoid_clicked()
     DimLabs[0]->setText("Semiaxis a"); DimLabs[0]->show(); DimSpins[0]->setValue(1.0); DimSpins[0]->show(); NDims++;
     DimLabs[1]->setText("Semiaxis b"); DimLabs[1]->show(); DimSpins[1]->setValue(1.0); DimSpins[1]->show(); NDims++;
     DimLabs[2]->setText("Semiaxis c"); DimLabs[2]->show(); DimSpins[2]->setValue(1.0); DimSpins[2]->show(); NDims++;
-    DimLabs[3]->setText("Depth");      DimLabs[3]->show(); DimSpins[3]->setValue(3.0); DimSpins[3]->show(); NDims++;
+    DimLabs[3]->setText("Depth");      DimLabs[3]->show(); DimSpins[3]->setValue(0.0); DimSpins[3]->show(); NDims++;
 
-    DiscLabs[0]->setText("Azimuthal");      DiscLabs[0]->show();    DiscSpins[0]->setValue(32); DiscSpins[0]->show();   NDisc++;
-    DiscLabs[1]->setText("Axial");          DiscLabs[1]->show();    DiscSpins[1]->setValue(16); DiscSpins[1]->show();  NDisc++;
+    DiscLabs[0]->setText("Azimuthal");      DiscLabs[0]->show();    DiscSpins[0]->setValue(16); DiscSpins[0]->show();   NDisc++;
+    DiscLabs[1]->setText("Axial");          DiscLabs[1]->show();    DiscSpins[1]->setValue(8); DiscSpins[1]->show();  NDisc++;
 
     update();
 }
