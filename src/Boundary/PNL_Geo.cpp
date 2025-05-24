@@ -59,8 +59,6 @@ bool PNL_Geometry::Read_Input_File(std::string &FilePath)
                 continue;
             }
 
-            std::cout << "HERE I AM Pos = " << Pos << std::endl;
-
             // Line contains the number of panels, nodes & X & Y Symmetry
             if (Pos == 1){
                 NPanels = std::stoi(Fields[0]);
@@ -98,7 +96,7 @@ bool PNL_Geometry::Read_Input_File(std::string &FilePath)
 
 void PNL_Geometry::Generate_Nodes()
 {
-    // This temporarily stores the nodes of the MAR import
+    // This stores the nodes of the pnl import
 
     Inertial_CS = new CoordSys();
 
@@ -107,24 +105,24 @@ void PNL_Geometry::Generate_Nodes()
         Vector3 PS = Scale*PNL_Nodes_Raw[i];
         Nodes.push_back(std::make_shared<Node>(Inertial_CS,PS));
     }
-    for (int i=0; i<Nodes.size(); i++)  Nodes[i]->ID = i;
+    for (size_t i=0; i<Nodes.size(); i++)  Nodes[i]->ID = i;
 
     PNL_Nodes_Raw.clear();        // Clear list
 }
 
 void PNL_Geometry::Generate_Elements()
 {
-    // This generates panel elements from the MAR nodes
+    // This generates panel elements from the pnl nodes
 
     for (int i=0; i<PNL_Connectivity.size(); i++){
 
-        if (PNL_Connectivity[i].size()==3)   Elements.push_back(std::make_shared<Tri_Element>(  Nodes[PNL_Connectivity[i][0]],
-                                                             Nodes[PNL_Connectivity[i][1]],
-                                                             Nodes[PNL_Connectivity[i][2]]));
-        if (PNL_Connectivity[i].size()==4)   Elements.push_back(std::make_shared<Quad_Element>( Nodes[PNL_Connectivity[i][0]],
-                                                              Nodes[PNL_Connectivity[i][1]],
-                                                              Nodes[PNL_Connectivity[i][2]],
-                                                              Nodes[PNL_Connectivity[i][3]]));
+        if (PNL_Connectivity[i].size()==3)   Elements.push_back(std::make_shared<Tri_Element>(  Nodes[PNL_Connectivity[i][0]-1],
+                                                                                                Nodes[PNL_Connectivity[i][1]-1],
+                                                                                                Nodes[PNL_Connectivity[i][2]-1]));
+        if (PNL_Connectivity[i].size()==4)   Elements.push_back(std::make_shared<Quad_Element>( Nodes[PNL_Connectivity[i][0]-1],
+                                                                                                Nodes[PNL_Connectivity[i][1]-1],
+                                                                                                Nodes[PNL_Connectivity[i][2]-1],
+                                                                                                Nodes[PNL_Connectivity[i][3]-1]));
     }
 
     PNL_Connectivity.clear();            // Clear list to avoid problems with destructor

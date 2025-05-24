@@ -335,7 +335,7 @@ void BEMUser_Interface::on_ImportButton_clicked()
     if (selectedFilter==WAMIT_FILES)    Boundary = new BEMUse::GDF_Geometry();
     if (selectedFilter==NEMOH_FILES)    Boundary = new BEMUse::MAR_Geometry();
     if (selectedFilter==STL_FILES)      Boundary = new BEMUse::STL_Geometry();
-    if (selectedFilter==STL_FILES)      Boundary = new BEMUse::PNL_Geometry();
+    if (selectedFilter==PNL_FILES)      Boundary = new BEMUse::PNL_Geometry();
 
 //    Boundary->Read_Input_File(Pfad);
     std::string Pfadstring = Pfad.toStdString();
