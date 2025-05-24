@@ -35,7 +35,7 @@ In order to carry out an analysis with BEMUse, you need to specify the geometry 
 The geometry is specified over the command line. There are two options for specifying a geometry. 
 
 ### Importing a Geometry
-You can import an external geometry simply by specifying a `WAMIT`® (`.gdf`), `NEMOH` (`.mar`) or (`.stl`) geometry file. 
+You can import an external geometry simply by specifying a `WAMIT`® (`.gdf`), `NEMOH` (`.mar`), `pyHAMS` (`.pnl`) or (`.stl`) geometry file. 
 The specified path should be relative to the directory in which the executable is found. An example might be:
 ```
 BEMUse <ExternalGeos/MyGeo.mar> <OutputPrefix>

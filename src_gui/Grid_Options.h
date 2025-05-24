@@ -19,6 +19,7 @@
 #include "src/Boundary/STL_Geo.h"
 #include "src/Boundary/GDF_Geo.h"
 #include "src/Boundary/MAR_Geo.h"
+#include "src/Boundary/PNL_Geo.h"
 #include "src/Boundary/FOWT_Platforms.h"
 #include "src/Boundary/Barge.h"
 #include "src/Boundary/Thin_Disc.h"

@@ -49,6 +49,7 @@ SOURCES += main.cpp\
     src/Boundary/Half_Volume_of_Revolution.cpp \
     src/Boundary/Hoizontal_Volume_of_Revolution.cpp \
     src/Boundary/MAR_Geo.cpp \
+    src/Boundary/PNL_Geo.cpp \
     src/Boundary/STL_Geo.cpp \
     src/Boundary/Ship_Hulls.cpp \
     src/Boundary/Thin_Disc.cpp \
@@ -75,6 +76,7 @@ HEADERS  += \
     src/Boundary/Half_Volume_of_Revolution.h \
     src/Boundary/Horizontal_Volume_of_Revolution.h \
     src/Boundary/MAR_Geo.h \
+    src/Boundary/PNL_Geo.h \
     src/Boundary/STL_Geo.h \
     src/Boundary/Ship_Hulls.h \
     src/Boundary/Thin_Disc.h \

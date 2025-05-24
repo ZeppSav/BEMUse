@@ -323,17 +323,19 @@ void BEMUser_Interface::on_Button_Grid_clicked()
 #define WAMIT_FILES "WAMIT geometry file (*.gdf)"
 #define NEMOH_FILES "NEMOH geometry file (*.mar)"
 #define STL_FILES   "STL file (*.stl)"
+#define PNL_FILES   "PNL file (*.pnl)"
 
 void BEMUser_Interface::on_ImportButton_clicked()
 {
     if (Boundary!=NULL) return;
-    QString filter = WAMIT_FILES ";;" NEMOH_FILES ";;" STL_FILES;
+    QString filter = WAMIT_FILES ";;" NEMOH_FILES ";;" STL_FILES ";;" PNL_FILES;
     QString selectedFilter;
     QString Pfad = QFileDialog::getOpenFileName(this, tr("Find File"), QDir::currentPath(),filter,&selectedFilter);
     if (Pfad.isEmpty()) {Update_Status("No File selected.");   return;}
     if (selectedFilter==WAMIT_FILES)    Boundary = new BEMUse::GDF_Geometry();
     if (selectedFilter==NEMOH_FILES)    Boundary = new BEMUse::MAR_Geometry();
     if (selectedFilter==STL_FILES)      Boundary = new BEMUse::STL_Geometry();
+    if (selectedFilter==STL_FILES)      Boundary = new BEMUse::PNL_Geometry();
 
 //    Boundary->Read_Input_File(Pfad);
     std::string Pfadstring = Pfad.toStdString();
