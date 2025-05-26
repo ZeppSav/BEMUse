@@ -20,6 +20,7 @@ void Hydrodynamic_Radiation_Solver::Create_Panels(Boundary *B)
     std::vector<SP_Geo> Geo, GeoRefl;
     B->Get_Elements(Geo);
     B->Get_Symm_Elements(GeoRefl);
+    B->Get_Ext_Elements(FS_Geo);
     NPA = Geo.size();               // Set number of geometry surface panels here
 
     //--- Are we carrying out irregular freqency removal? Then include also the auxiliary panels & reflected auxiliary panels
@@ -142,39 +143,6 @@ void Hydrodynamic_Radiation_Solver::Prepare_PostProcessing_Mats()
 
 }
 
-void Hydrodynamic_Radiation_Solver::Prepare_External_Linear_System(Boundary *B)
-{
-    // The calculation of the external wave system is accomplished by determining the value of the potential
-    // at the external free surface positions. This can be precalculated as with the surface problem solution.
-
-    // Generate list of node positions
-    B->Get_Ext_Nodes(Wave_Nodes);
-    if (Wave_Nodes.empty()) return;             // No external nodes, ignore!
-
-    int NWN = Wave_Nodes.size();
-    std::vector<Vector3> WaveNodePos;
-    for (SP_Node N: Wave_Nodes) WaveNodePos.push_back(N->Position_Global());
-
-    // Create Array
-    SMatExt = CMatrix::Zero(NWN,NPA);
-
-    OpenMPfor
-    for (int S=0; S<NPA; S++){
-        for (int R=0; R<NWN; R++)
-        {
-            // Source terms
-            Real s,d,sr,dr;
-            Source_Panels[S]->Inf_SingleDoubleLayer(WaveNodePos[R],s,d);         // Rankine source
-            Refl_Source_Panels[S]->Inf_SingleDoubleLayer(WaveNodePos[R],sr,dr);  // Reflected rankine source
-            SMatExt(R,S) = CReal(-s,0) + CReal(-sr,0);
-        }
-    }
-
-    std::cout << "Calculating external wave elevation: Number of surface nodes = "<< NWN << std::endl;
-//              << " Max coeff = "<< SMatExt.real().maxCoeff()
-//              << ", Min coeff = "<< SMatExt.real().minCoeff() << std::endl;
-}
-
 void Hydrodynamic_Radiation_Solver::Prepare_Linear_System_Wave_Terms()
 {
     // Prepare the linear system for the wave terms.
@@ -203,10 +171,45 @@ void Hydrodynamic_Radiation_Solver::Prepare_Linear_System_Wave_Terms()
     }
 }
 
-void Hydrodynamic_Radiation_Solver::Prepare_External_Linear_System_Wave_Terms()
+void Hydrodynamic_Radiation_Solver::Prepare_FS_Linear_System(Boundary *B)
 {
-    // Prepare the linear system for the wave terms.
-    // These coefficients must be calculated at each frequency.
+    // The calculation of the external wave system is accomplished by determining the value of the potential
+    // at the external free surface positions. This can be precalculated as with the surface problem solution.
+
+    // Generate list of node positions
+    B->Get_Ext_Nodes(Wave_Nodes);
+    if (Wave_Nodes.empty()) return;
+
+    int NWN = Wave_Nodes.size();
+    std::vector<Vector3> WaveNodePos;
+    for (SP_Node N: Wave_Nodes) WaveNodePos.push_back(N->Position_Global());
+
+    // Create Array
+    SMatExt = CMatrix::Zero(NWN,NPA);
+    SMatReflExt = CMatrix::Zero(NWN,NPA);
+    DMatExt = CMatrix::Zero(NWN,NPA);
+    DMatReflExt = CMatrix::Zero(NWN,NPA);
+
+    OpenMPfor
+        for (int S=0; S<NPA; S++){
+        for (int R=0; R<NWN; R++)
+        {
+            // Source terms
+            Real s,d,sr,dr;
+            Source_Panels[S]->Inf_SingleDoubleLayer(WaveNodePos[R],s,d);         // Rankine source
+            Refl_Source_Panels[S]->Inf_SingleDoubleLayer(WaveNodePos[R],sr,dr);  // Reflected rankine source
+            SMatExt(R,S) = CReal(-s,0);
+            SMatReflExt(R,S) = CReal(-sr,0);
+            DMatExt(R,S) = CReal(d,0);
+            DMatReflExt(R,S) = CReal(dr,0);
+        }
+    }
+}
+
+void Hydrodynamic_Radiation_Solver::Prepare_FS_Linear_System_Wave_Terms()
+{
+    // Prepare the frequency-dependent coefficients of the linear system for the
+    // calculation of the potential on the free surface.
 
     // Generate list of node positions
     if (Wave_Nodes.empty()) return;             // No external nodes, ignore!
@@ -216,22 +219,19 @@ void Hydrodynamic_Radiation_Solver::Prepare_External_Linear_System_Wave_Terms()
     for (SP_Node N: Wave_Nodes) WaveNodePos.push_back(N->Position_Global());
 
     // Create wave term array
-    WMatExt = CMatrix::Zero(NWN,NPA);
+    SWaveMatExt = CMatrix::Zero(NWN,NPA);
+    DWaveMatExt = CMatrix::Zero(NWN,NPA);
 
     OpenMPfor
     for (int S=0; S<NPA; S++){
         for (int R=0; R<NWN; R++)
         {
-            // Add wave terms
             CReal ws,wd;
             Wave_Panels[S]->CInf_SingleDoubleLayerQuad(WaveNodePos[R],ws,wd);    // Wave term
-            WMatExt(R,S) = -ws;
+            SWaveMatExt(R,S) = -ws;
+            DWaveMatExt(R,S) = wd + SMatReflExt(R,S)*ReflNormMat(S)*Kappa;
         }
     }
-
-//    std::cout << "Calculating external wave elevation: Number of surface nodes = " << NWN << std::endl;
-//              << " Max coeff = "<< WMatExt.real().maxCoeff()
-//              << ", Min coeff = "<< WMatExt.real().minCoeff() << std::endl;
 }
 
 //--- Setup
@@ -247,7 +247,7 @@ void Hydrodynamic_Radiation_Solver::Setup(Boundary *B)
     Prepare_PostProcessing_Mats();
 
     // Prepare exterior free surface
-    Prepare_External_Linear_System(B);
+    Prepare_FS_Linear_System(B);
 
     // Specify storage arrays
     NBeta = BetaArray.size();
@@ -463,13 +463,18 @@ void Hydrodynamic_Radiation_Solver::Solve()
     // These terms must be integrated azimuthally in order to calculate mean drift terms.
     // This is left to the user as the RAOs must be used.
 
-    //--- Calc exterior solution (free surface elevation)
-    Prepare_External_Linear_System_Wave_Terms();
-    if (!Wave_Nodes.empty()) ExtRadMat =  -Im*Omega/Gravity*(WMatExt + SMatExt)*Phi_J;
-    if (!Wave_Nodes.empty()) ExtDiffMat = -Im*Omega/Gravity*(WMatExt + SMatExt)*Phi_S;
+    //--- Calc free surface elevation
+    if (!Wave_Nodes.empty()){
+        Prepare_FS_Linear_System_Wave_Terms();
+        CMatrix WSMat = SMatExt + SMatReflExt + SWaveMatExt;
+        CMatrix WDMat = DMatExt + DMatReflExt + DWaveMatExt;
+        ExtRadMat = -Im*Omega/Gravity*(WSMat*DPhi_J_DN - WDMat*Phi_J);
+        ExtDiffMat = -Im*Omega/Gravity*(WSMat*DPhi_I_DN - WDMat*Phi_S);
+    }
 
     //--- Update output files
     Update_Output_File();
+    if (!Wave_Nodes.empty()) Export_Wave_Height();
 
     //--- Store results for visualisation
     RadSolArray.push_back(Phi_J);

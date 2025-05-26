@@ -26,6 +26,82 @@ void Hydrodynamic_Radiation_Solver::Update_Output_File()
     Update_Output_File_WAMIT();
 }
 
+//--- Free surface vis
+
+static int const vtiPrecision = 3;     // Low Precision, low memory
+static int const vtiWidth = 11;        // Width for parsing low precision number
+
+void Hydrodynamic_Radiation_Solver::Export_Wave_Height()
+{
+    // The solution to the free surface wave elevation has been calculated and is stored in ExtRadMat
+    // I will generate a .vtp here and export it.
+
+    std::string FSOutputDirectory = "Output/FSG";
+    CreateDirectory(FSOutputDirectory);   // Create directory if it doesn't yet exist
+    std::string OutputPathFS = "Output/FSG";
+
+    std::string FilePath = OutputPathFS + "/FS_Displacement_Omega_" + std::to_string(Omega) + ".vtp";
+    std::ofstream vtifile( FilePath.c_str() );
+    vtifile.precision(vtiPrecision);
+    if(!vtifile.is_open())
+    {
+        std::cerr << "ERROR: cannot open vtifile." << std::endl;
+        return;
+    }
+
+    // Generate solutions in such a way that paraview can read them
+    int NN = Wave_Nodes.size();
+    int NP = FS_Geo.size();
+
+    // std::cout << "Dimensions of Mat: " << ExtRadMat.rows() csp ExtRadMat.cols() << std::endl;
+
+    vtifile << "<?xml version='1.0'?>" << "\n";
+    vtifile << "<VTKFile type='PolyData' version='0.1' byte_order='LittleEndian'>" << "\n";
+    vtifile << "  <PolyData>"   << "\n";
+    vtifile << "    <Piece NumberOfPoints='" << NN << "' NumberOfPolys='" << NP << "'> " << "\n";
+    vtifile << "        <Points> "   << "\n";
+    vtifile << "            <DataArray type='Float32' NumberOfComponents='3' format='ascii'>" << " \n";
+    for (int i=0; i<NN; i++){
+        Vector3 P = Wave_Nodes[i]->Position_Global();
+        vtifile << std::scientific << std::setw(vtiWidth) << P(0) << std::setw(vtiWidth) << P(1) << std::setw(vtiWidth) << P(2);
+    }
+    vtifile << "            </DataArray> "   << "\n";
+    vtifile << "        </Points> "   << "\n";
+    vtifile << "        <Polys>"   << "\n";
+    vtifile << "            <DataArray type='Int32' Name='connectivity' format='ascii'>" << " \n";
+    for (int i=0; i<NP; i++){
+        vtifile << std::scientific  << std::setw(vtiWidth) << FS_Geo[i]->Get_Node(0)->ID
+                << std::setw(vtiWidth) << FS_Geo[i]->Get_Node(1)->ID
+                << std::setw(vtiWidth) << FS_Geo[i]->Get_Node(2)->ID
+                << std::setw(vtiWidth) << FS_Geo[i]->Get_Node(3)->ID;
+    }
+    vtifile << "            </DataArray> "   << "\n";
+    vtifile << "            <DataArray type='Int32' Name='offsets' format='ascii'>" << " \n";
+    for (int i=0; i<NP; i++)  vtifile << std::scientific  << std::setw(vtiWidth) << 4*(i+1);
+    vtifile << "            </DataArray> "   << "\n";
+    vtifile << "        </Polys>"   << "\n";
+
+    vtifile << "            <PointData Scalars='node_scalar'>"   << "\n";
+    std::vector<std::string> DOFS = {"surge", "sway", "heave", "pitch", "roll", "yaw"};
+    for (int dof = 0; dof<6; dof++){
+        // Radiation solutions
+        vtifile << "                <DataArray type='Float32' Name='eta_rad" + DOFS[dof] + "' format='ascii'>\n";
+        for (int i=0; i<NN; i++)  vtifile << std::scientific << std::setw(vtiWidth) << std::abs(ExtRadMat(i,dof));
+        vtifile << "\n              </DataArray>     \n";
+    }
+    // Diffraction solution
+    vtifile << "                <DataArray type='Float32' Name='eta_diff' format='ascii'>\n";
+    for (int i=0; i<NN; i++)  vtifile << std::scientific << std::setw(vtiWidth) << std::abs(ExtDiffMat(i));
+    vtifile << "\n              </DataArray>     \n";
+
+    vtifile << "           </PointData> "   << " \n";
+
+    vtifile << "        </Piece>   "       << " \n";
+    vtifile << "    </PolyData>  "       << " \n";
+    vtifile << "</VTKFile> "           << " \n";
+    vtifile.close();
+}
+
 //--- Output (BEMUse Format)
 
 void Hydrodynamic_Radiation_Solver::Generate_Output_File_BEMUse(Boundary *B)

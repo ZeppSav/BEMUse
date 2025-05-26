@@ -44,9 +44,10 @@ class Hydrodynamic_Radiation_Solver : public Solver
     //--- Kochin functions
     CMatrix KochinRad, KochinDiff;
 
-    //--- Exterior solution
+    //--- Free surface elevation
     std::vector<SP_Node> Wave_Nodes;
-    CMatrix SMatExt, WMatExt;
+    CMatrix SMatExt, SMatReflExt, SWaveMatExt;
+    CMatrix DMatExt, DMatReflExt, DWaveMatExt;
     CMatrix ExtRadMat, ExtDiffMat;  // Solution vector
 
     //--- Solution matrices
@@ -67,14 +68,15 @@ class Hydrodynamic_Radiation_Solver : public Solver
 
     //--- Panels
     std::vector<SP_Panel> Source_Panels, Refl_Source_Panels, Wave_Panels;
+    std::vector<SP_Geo> FS_Geo;
 
     //--- Problem Setup
     void Create_Panels(Boundary *B);
     void Specify_BC_Nodes();
     void Prepare_Linear_System();
     void Prepare_Linear_System_Wave_Terms();
-    void Prepare_External_Linear_System(Boundary *B);
-    void Prepare_External_Linear_System_Wave_Terms();
+    void Prepare_FS_Linear_System(Boundary *B);
+    void Prepare_FS_Linear_System_Wave_Terms();
     void Prepare_PostProcessing_Mats();
 
     void Calculate_Mass_Matrix(Boundary *B);
@@ -121,7 +123,7 @@ class Hydrodynamic_Radiation_Solver : public Solver
     //--- Output functions
     void Generate_Output_File_BEMUse(Boundary *B);
     void Generate_Output_File_WAMIT(Boundary *B);
-
+    void Export_Wave_Height();
     void Update_Output_File_BEMUse();
     void Update_Output_File_WAMIT();
 
