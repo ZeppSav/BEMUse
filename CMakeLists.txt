@@ -4,6 +4,10 @@ project(BEMUse VERSION 1.0 LANGUAGES CXX)
 
 option(BUILD_GUI "Build GUI version" OFF)  # Option to build GUI version# Optional GUI
 
+IF(NOT DEFINED CMAKE_BUILD_TYPE)
+  SET(CMAKE_BUILD_TYPE Release)
+ENDIF()
+
 set(CMAKE_CXX_STANDARD 17)                     # Set c++ standard
 set(CMAKE_CXX_STANDARD_REQUIRED ON)            # Enforce
 set(CMAKE_CXX_FLAGS "-march=native")  # Set compiler optimisation flags
