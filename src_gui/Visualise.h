@@ -25,8 +25,8 @@
 #ifndef VISUALISE_H
 #define VISUALISE_H
 
-#include "src/Boundary/Boundary_Base.h"
-#include "src/Geometry/Panel.h"
+#include "Boundary/Boundary_Base.h"
+#include "Geometry/Panel.h"
 
 #ifdef _WIN32
 #include <windows.h>

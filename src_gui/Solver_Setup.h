@@ -4,8 +4,8 @@
 #include <QWidget>
 
 //--- BEMUse Objects
-#include "src/Solver/Aerodynamic_Solver.h"
-#include "src/Solver/Hydrodynamic_Solver.h"
+#include "Solver/Aerodynamic_Solver.h"
+#include "Solver/Hydrodynamic_Solver.h"
 
 namespace Ui {
 class Solver_Setup;

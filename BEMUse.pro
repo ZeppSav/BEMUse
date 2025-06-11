@@ -36,6 +36,8 @@ DEFINES += SinglePrec
 
 INCLUDEPATH += ..\eigen
 
+INCLUDEPATH += src
+
 #------------------------
 # Source and header files
 #------------------------
