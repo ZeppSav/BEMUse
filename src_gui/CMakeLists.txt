@@ -28,3 +28,5 @@ target_compile_definitions(BEMUse_GUI PRIVATE BEMUse_GUI)
 set_target_properties(BEMUse_GUI PROPERTIES AUTOUIC ON AUTOMOC ON)
 
 target_link_libraries(BEMUse_GUI PRIVATE BEMUse_lib Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets OpenGL::GLU)
+
+install(TARGETS BEMUse_GUI)

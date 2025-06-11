@@ -24,6 +24,8 @@ add_executable(BEMUse src/BEMUser_Console.cpp main.cpp)
 
 target_link_libraries(BEMUse PRIVATE BEMUse_lib)
 
+install(TARGETS BEMUse)
+
 if(BUILD_GUI)
     add_subdirectory(src_gui)  # Add GUI subdirectory if BUILD_GUI is ON
 endif()

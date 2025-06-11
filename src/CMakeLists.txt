@@ -51,3 +51,6 @@ target_sources(BEMUse_lib PUBLIC
 )
 
 target_link_libraries(BEMUse_lib PUBLIC Eigen3::Eigen OpenMP::OpenMP_CXX)
+
+include(GNUInstallDirs)
+install(TARGETS BEMUse_lib FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/BEMUse)
