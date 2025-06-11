@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(BEMUse VERSION 1.0 LANGUAGES CXX)
 
 option(BUILD_GUI "Build GUI version" OFF)  # Option to build GUI version# Optional GUI
+option(BUILD_SHARED_LIBS "Build shared library" ON)
 
 IF(NOT DEFINED CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
