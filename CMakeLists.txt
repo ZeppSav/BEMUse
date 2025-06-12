@@ -17,6 +17,20 @@ set(CMAKE_CXX_FLAGS "-march=native")  # Set compiler optimisation flags
 add_compile_definitions(SinglePrec)     # Single precision compile
 #add_compile_definitions(DoublePrec)    # Double precision compile
 
+#--- RPATH tweaks for relocatable installation
+include(GNUInstallDirs)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)  # Also add external library paths to RPATH
+set(CMAKE_SKIP_BUILD_RPATH FALSE)            # Do not skip build RPATH
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)    # Use install RPATH during build
+# Set RPATH to point to the lib directory relative to the executable
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(APPEND CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin") # Not tested
+    list(APPEND CMAKE_INSTALL_RPATH "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
+endif()
+# On Windows, shared libraries are typically in the same directory as the executable
+
+#--- Add library directory
 add_subdirectory(src) # Add the main BEMUse library source directory
 
 # Specify target executable
