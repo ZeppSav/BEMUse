@@ -36,6 +36,8 @@ DEFINES += SinglePrec
 
 INCLUDEPATH += ..\eigen
 
+INCLUDEPATH += src
+
 #------------------------
 # Source and header files
 #------------------------
@@ -47,7 +49,7 @@ SOURCES += main.cpp\
     src/Boundary/Ellipsoid.cpp \
     src/Boundary/GDF_Geo.cpp \
     src/Boundary/Half_Volume_of_Revolution.cpp \
-    src/Boundary/Hoizontal_Volume_of_Revolution.cpp \
+    src/Boundary/Horizontal_Volume_of_Revolution.cpp \
     src/Boundary/MAR_Geo.cpp \
     src/Boundary/PNL_Geo.cpp \
     src/Boundary/STL_Geo.cpp \

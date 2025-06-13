@@ -1,0 +1,16 @@
+# CMake usual build directory
+build/
+
+# qmake builds at the root
+.qmake.stash
+Makefile
+*.o
+*.so
+*.a
+ui_*.h
+moc_*.h
+moc_*.cpp
+BEMUse
+
+# Default runtime output directory
+Output/

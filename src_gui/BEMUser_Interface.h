@@ -23,9 +23,9 @@
 //--- BEMUse Source---
 //--------------------
 
-#include "src/Boundary/Boundary_Base.h"
-#include "src/Solver/Solver_Base.h"
-#include "src_gui/Visualise.h"
+#include "Boundary/Boundary_Base.h"
+#include "Solver/Solver_Base.h"
+#include "Visualise.h"
 
 #define GLPANELS                1
 

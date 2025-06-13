@@ -11,20 +11,20 @@
 #include <QPushButton>
 
 // Include geometry options
-#include "src/Boundary/Ellipsoid.h"
-#include "src/Boundary/Volume_of_Revolution.h"
-#include "src/Boundary/Horizontal_Volume_of_Revolution.h"
-#include "src/Boundary/Triple_Spar.h"
-#include "src/Boundary/Ship_Hulls.h"
-#include "src/Boundary/STL_Geo.h"
-#include "src/Boundary/GDF_Geo.h"
-#include "src/Boundary/MAR_Geo.h"
-#include "src/Boundary/PNL_Geo.h"
-#include "src/Boundary/FOWT_Platforms.h"
-#include "src/Boundary/Barge.h"
-#include "src/Boundary/Thin_Disc.h"
+#include "Boundary/Ellipsoid.h"
+#include "Boundary/Volume_of_Revolution.h"
+#include "Boundary/Horizontal_Volume_of_Revolution.h"
+#include "Boundary/Triple_Spar.h"
+#include "Boundary/Ship_Hulls.h"
+#include "Boundary/STL_Geo.h"
+#include "Boundary/GDF_Geo.h"
+#include "Boundary/MAR_Geo.h"
+#include "Boundary/PNL_Geo.h"
+#include "Boundary/FOWT_Platforms.h"
+#include "Boundary/Barge.h"
+#include "Boundary/Thin_Disc.h"
 
-#include "src/Boundary/Wing.h"
+#include "Boundary/Wing.h"
 
 enum Geo    {   No_Geo,
                 Semi_Ellipsoid,
