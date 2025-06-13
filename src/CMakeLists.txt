@@ -12,7 +12,7 @@ target_sources(BEMUse_lib PRIVATE
     Boundary/Ellipsoid.cpp
     Boundary/GDF_Geo.cpp
     Boundary/Half_Volume_of_Revolution.cpp
-    Boundary/Hoizontal_Volume_of_Revolution.cpp
+    Boundary/Horizontal_Volume_of_Revolution.cpp
     Boundary/MAR_Geo.cpp
     Boundary/PNL_Geo.cpp
     Boundary/STL_Geo.cpp
