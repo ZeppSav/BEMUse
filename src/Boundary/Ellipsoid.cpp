@@ -45,9 +45,11 @@ void Ellipsoid::Generate_Nodes()
         {
             Real u = j*TwoPI/NAR;
 
-            //--- Mod for triangular panels
-            if (i%2==0) u += 0.5*TwoPI/NAR;
-            //------------------------------
+            // //--- Mod for triangular panels
+            // if (TriPanels) {
+            //     if (i%2==0) u += 0.5*TwoPI/NAR;
+            // }
+            // //------------------------------
 
             Vector3 BP  ( a*cos(u)*sinv, b*sin(u)*sinv, c*cosv);
             Vector3 dPdu(-a*sin(u)*sinv, b*cos(u)*sinv, 0);         dPdu.normalize();
@@ -97,37 +99,41 @@ void Ellipsoid::Generate_Elements()
                                                                                         Nodes[Node_ID(i+1,1)],
                                                                                         Nodes[Node_ID(i,1)]));
 
-    // Central quadratic elements
-    // for (int z=1; z<NZ-1; z++){
-    //     for (int i=0; i<NA; i++)    Elements.push_back(std::make_shared<Quad_Element>(  Nodes[Node_ID(i,z)],
-    //                                                                                     Nodes[Node_ID(i+1,z)],
-    //                                                                                     Nodes[Node_ID(i+1,z+1)],
-    //                                                                                     Nodes[Node_ID(i,z+1)]));
+    // if (TriPanels) {
+    //     // Generate central elements with triangular panels
+    //     for (int z=1; z<NZ-1; z++){
+    //         for (int i=0; i<NA; i++){
+    //             if (z%2==0){
+    //                 Elements.push_back(std::make_shared<Tri_Element>(Nodes[Node_ID(i,z)],
+    //                                                                  Nodes[Node_ID(i+1,z+1)],
+    //                                                                  Nodes[Node_ID(i+1,z)]));
+    //                 Elements.push_back(std::make_shared<Tri_Element>(Nodes[Node_ID(i+1,z)],
+    //                                                                  Nodes[Node_ID(i+1,z+1)],
+    //                                                                  Nodes[Node_ID(i+2,z+1)]));
+    //             }
+    //             else
+    //             {
+    //                 Elements.push_back(std::make_shared<Tri_Element>(Nodes[Node_ID(i,z)],
+    //                                                                  Nodes[Node_ID(i,z+1)],
+    //                                                                  Nodes[Node_ID(i+1,z)]));
+    //                 Elements.push_back(std::make_shared<Tri_Element>(Nodes[Node_ID(i+1,z)],
+    //                                                                  Nodes[Node_ID(i,z+1)],
+    //                                                                  Nodes[Node_ID(i+1,z+1)]));
+    //             }
+    //         }
+    //     }
     // }
-
-    //--- Mod for triangular panels
-    for (int z=1; z<NZ-1; z++){
-        for (int i=0; i<NA; i++){
-             if (z%2==0){
-                Elements.push_back(std::make_shared<Tri_Element>(Nodes[Node_ID(i,z)],
-                                                                 Nodes[Node_ID(i+1,z+1)],
-                                                                 Nodes[Node_ID(i+1,z)]));
-                Elements.push_back(std::make_shared<Tri_Element>(Nodes[Node_ID(i+1,z)],
-                                                                 Nodes[Node_ID(i+1,z+1)],
-                                                                 Nodes[Node_ID(i+2,z+1)]));
-             }
-             else
-             {
-                 Elements.push_back(std::make_shared<Tri_Element>(Nodes[Node_ID(i,z)],
-                                                                  Nodes[Node_ID(i,z+1)],
-                                                                  Nodes[Node_ID(i+1,z)]));
-                 Elements.push_back(std::make_shared<Tri_Element>(Nodes[Node_ID(i+1,z)],
-                                                                  Nodes[Node_ID(i,z+1)],
-                                                                  Nodes[Node_ID(i+1,z+1)]));
-             }
+    // else
+    // {
+        // Generate central elements with quadratic panels
+        for (int z=1; z<NZ-1; z++){
+            // for (int z=1; z<NZ/2; z++){
+            for (int i=0; i<NA; i++)    Elements.push_back(std::make_shared<Quad_Element>(  Nodes[Node_ID(i,z)],
+                                                                                            Nodes[Node_ID(i+1,z)],
+                                                                                            Nodes[Node_ID(i+1,z+1)],
+                                                                                            Nodes[Node_ID(i,z+1)]));
         }
-    }
-    //------------------------------
+    // }
 
     // Nose (triangular elements)
     for (int i=0; i<NA; i++)        Elements.push_back(std::make_shared<Tri_Element>(   Nodes[Node_ID(i+1,NZ-1)],
@@ -147,10 +153,11 @@ int Ellipsoid::Node_ID(int A, int Z)
     if (Z==0)           return 0;
     else {
         if (A>=NA)      return 1+(Z-1)*NA+(A-NA);
-//        else if (A<0)   return 1+(Z-1)*NA+(A+NA);
+        //        else if (A<0)   return 1+(Z-1)*NA+(A+NA);
         else            return 1+(Z-1)*NA+A;
     }
 }
+
 
 //--- Semi Ellipsoid
 

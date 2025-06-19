@@ -105,7 +105,7 @@ class Tri_Element : public Area_Element
 {
 protected:
 
-    int N=4;
+    int N=2;
 
 public:
 

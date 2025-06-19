@@ -28,7 +28,7 @@ LIBS += -fopenmp
 #----------------------------------------------
 
 DEFINES += SinglePrec
-#DEFINES += DoublePrec
+# DEFINES += DoublePrec
 
 #----------------------------------------------
 # include path to external source

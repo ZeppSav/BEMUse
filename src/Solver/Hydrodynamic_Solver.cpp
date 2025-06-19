@@ -124,6 +124,7 @@ void Hydrodynamic_Radiation_Solver::Prepare_PostProcessing_Mats()
     // This is done here to improve overview of the code
 
     AddedMassMat = CMatrix::Zero(NDOF,NPA);
+    PanArea = Matrix::Zero(NPA,1);
 
     OpenMPfor
     for (int i=0; i<NPA; i++)
@@ -133,6 +134,7 @@ void Hydrodynamic_Radiation_Solver::Prepare_PostProcessing_Mats()
         Vector3 PCN = P.cross(N);
         Real dS = Panels[i]->Get_Geo()->Area;
 
+        PanArea(i) = dS;
         AddedMassMat(0,i) = N(0)*dS;
         AddedMassMat(1,i) = N(1)*dS;
         AddedMassMat(2,i) = N(2)*dS;
@@ -411,7 +413,7 @@ void Hydrodynamic_Radiation_Solver::Solve()
 
     //--- Calc diffraction solution (one solution per incoming wave angle Beta)
     Set_Incident_Potential_Mats();
-    CMatrix RHSDiff = SMat*(-DPhi_I_DN);
+    CMatrix RHSDiff = SMat*(-DPhi_I_DN.cwiseProduct(PanArea));
     CMatrix Phi_S = PPLU.solve(RHSDiff);
 //    CMatrix Phi_S = CG.solve(RHSDiff);
 //    CMatrix Phi_S = DGMRES.solve(RHSDiff);
@@ -438,7 +440,7 @@ void Hydrodynamic_Radiation_Solver::Solve()
 
     // Excitation forces
     CMatrix F1 = AddedMassMat*Phi_I;
-    CMatrix F2 = Phi_J.transpose()*DPhi_I_DN;
+    CMatrix F2 = Phi_J.transpose()*(DPhi_I_DN.cwiseProduct(PanArea));
     FK_i = -Im*Omega*F1;                // Froude-Krylov forces
     SC_i =  Im*Omega*F2;                // Scattering forces
     CMatrix FSup = FK_i + SC_i;
@@ -469,7 +471,7 @@ void Hydrodynamic_Radiation_Solver::Solve()
         CMatrix WSMat = SMatExt + SMatReflExt + SWaveMatExt;
         CMatrix WDMat = DMatExt + DMatReflExt + DWaveMatExt;
         ExtRadMat = -Im*Omega/Gravity*(WSMat*DPhi_J_DN - WDMat*Phi_J);
-        ExtDiffMat = -Im*Omega/Gravity*(WSMat*DPhi_I_DN - WDMat*Phi_S);
+        ExtDiffMat = -Im*Omega/Gravity*(WSMat*DPhi_I_DN + WDMat*Phi_S);
     }
 
     //--- Update output files
@@ -551,7 +553,6 @@ void Hydrodynamic_Radiation_Solver::Set_Incident_Potential_Mats()
 
         Vector3 Pos = Panel_Nodes[P]->Position_Global();     // Node position
         Vector3 Norm = Panel_Nodes[P]->Z_Axis_Global();            // Norm of the panel
-        Real dS = Source_Panels[P]->Get_Geo()->Area;            // Norm of the panel
 
         for (int B = 0; B<NBeta; B++){      // Loop Incoming Wave Angles
 
@@ -560,7 +561,6 @@ void Hydrodynamic_Radiation_Solver::Set_Incident_Potential_Mats()
 
             Phi_I(P,B) = pi;
             DPhi_I_DN(P,B) = Norm(0)*dpx + Norm(1)*dpy + Norm(2)*dpz;
-            DPhi_I_DN(P,B) *= dS;        // This is necessary for this post processing step
         }
     }
 }
@@ -578,11 +578,9 @@ void Hydrodynamic_Radiation_Solver::Set_Kochin_Mats()
 
     // Create list of surface positions, normals
     std::vector<Vector3> Pos, Norm;
-    StdVector S;
     for (int i=0; i<NPA; i++){
         Pos.push_back(Panel_Nodes[i]->Position_Global());
         Norm.push_back(Panel_Nodes[i]->Z_Axis_Global());
-        S.push_back(Panels[i]->Get_Geo()->Area);
     }
 
     OpenMPfor
@@ -602,12 +600,12 @@ void Hydrodynamic_Radiation_Solver::Set_Kochin_Mats()
             CReal dEdz = Kappa*E;
 
             if (i==NKoch){
-                KochinPiE(P) =  E*S[P];
-                KochinPidEdn(P) = (Norm[P](0)*dEdx + Norm[P](1)*dEdy + Norm[P](2)*dEdz)*S[P];
+                KochinPiE(P) =  E*PanArea(P);
+                KochinPidEdn(P) = (Norm[P](0)*dEdx + Norm[P](1)*dEdy + Norm[P](2)*dEdz)*PanArea(P);
             }
             else{
-                KochinE(i,P) = E*S[P];
-                KochindEdn(i,P) = (Norm[P](0)*dEdx + Norm[P](1)*dEdy + Norm[P](2)*dEdz)*S[P];
+                KochinE(i,P) = E*PanArea(P);
+                KochindEdn(i,P) = (Norm[P](0)*dEdx + Norm[P](1)*dEdy + Norm[P](2)*dEdz)*PanArea(P);
             }
         }
     }

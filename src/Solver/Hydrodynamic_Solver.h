@@ -40,6 +40,7 @@ class Hydrodynamic_Radiation_Solver : public Solver
     CMatrix ReflNormMat;                        // Normal of the reflected matrix
     CMatrix N_k_Mat, DPhi_J_DN;     // RHS vector which contains the Boundary conditions for the radiation problem
     CMatrix VisMat;
+    Matrix PanArea;                             // Area of panels
 
     //--- Kochin functions
     CMatrix KochinRad, KochinDiff;
