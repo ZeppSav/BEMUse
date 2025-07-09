@@ -111,6 +111,10 @@ void Tri_Element::Set_Quad_Nodes()
         SP_Node QNode = std::make_shared<Node>(Centroid->Get_Ref_CoordSys(),Quat::FromTwoVectors(UnitZ,R_n),P);
         QNode->Weight = Jac*W[i];
         QNodes.push_back(QNode);
+
+        // Store quadrature positions
+        QNode->QuadPos(0) = PX[i];
+        QNode->QuadPos(1) = PY[i];
     }
 }
 
@@ -201,6 +205,10 @@ void Quad_Element::Set_Quad_Nodes()
             SP_Node QNode = std::make_shared<Node>(Centroid->Get_Ref_CoordSys(),Quat::FromTwoVectors(UnitZ,R_n),P);
             QNode->Weight = Jac*WX[i]*WY[j];
             QNodes.push_back(QNode);
+
+            // Store quadrature positions
+            QNode->QuadPos(0) = PX[i];
+            QNode->QuadPos(1) = PY[j];
         }
     }
 }

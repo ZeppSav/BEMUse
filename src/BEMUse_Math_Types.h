@@ -66,10 +66,19 @@ static  Vector                  Empty_V;
 
 //-------- Additional deque variables and capabilities
 
-template <class T>          // Hack to avoid using insert everytime
+template <class T>
 static void StdAppend(std::vector<T>& lhs, const std::vector<T>& rhs)       {lhs.insert(lhs.end(),rhs.begin(), rhs.end());}
 
-template <class T>          // Hack to avoid using insert everytime
+template <class T>
+static void Remove_Duplicates(std::vector<T>& A)    {A.erase(std::unique(A.begin(),A.end()), A.end());}
+
+template <class T>
+static void Sort_Ascending(std::vector<T>& A)       {std::sort(A.begin(), A.end());}
+
+template <class T>
+static void Remove_Value(std::vector<T>& A, T V)    {A.erase(std::remove(A.begin(), A.end(), V), A.end());}
+
+template <class T>
 static void StdAppend(std::vector<T>& lhs, const std::vector<T>& rhs, const int &P1, const int &P2)     {lhs.insert(lhs.end(),rhs.begin()+P1, rhs.begin()+P2);}
 
 //-------- Time stamp

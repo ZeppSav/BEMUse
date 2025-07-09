@@ -63,6 +63,7 @@ SOURCES += main.cpp\
     src/Solver/Hydrodynamic_Solver.cpp \
     src/Solver/Hydrodynamic_Solver_IO.cpp \
     src/Solver/Solver_Base.cpp \
+    src/Solver/Surface.cpp
 
 HEADERS  += \
     src/BEMUse_Inquiry.h \
@@ -90,6 +91,7 @@ HEADERS  += \
     src/Solver/Solver_Base.h \
     src/Solver/Aerodynamic_Solver.h \
     src/Solver/Hydrodynamic_Solver.h \
+    src/Solver/Surface.h
 
 #-------------------
 # GUI configuration

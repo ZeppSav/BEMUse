@@ -46,7 +46,9 @@ public:
     Real    Weight = 0;
     CReal   CWeight = CReal(0,0);
     Vector3 VWeight = Vector3::Ones();
-    unsigned int    ID = 0;
+    Vector3 QuadPos = Vector3::Ones();  // Parametrized quadrature node coordinates
+    unsigned int    ID = 0;             // Local ID
+    unsigned int    IDS = 0;            // System ID
 };
 
 typedef std::shared_ptr<Node> SP_Node;
