@@ -38,6 +38,21 @@ namespace BEMUse
 
 inline Real PiCosFac(int i, int itot)      {return 0.5*(1.0-cos(i*PI/(itot-1)));}
 inline Real HalfPiCosFac(int i, int itot)  {return -cos(0.5*PI+0.5*i*PI/(itot-1));}
+inline Real HalfPiCosFac2(int i, int itot)  {return 1.0 - cos(0.5*i*PI/(itot-1));}
+
+inline Real PiCosFacShift(int i, int itot) {return 0.5*(1.0-cos((i+0.5)*PI/(itot-1)));}
+inline Real HalfPiCosFacShift(int i, int itot) {return -cos(0.5*PI+0.5*(i+0.5)*PI/(itot-1));}
+inline Real HalfPiCosFac2Shift(int i, int itot)  {return 1.0 - cos(0.5*(i+0.5)*PI/(itot-1));}
+
+struct Parameter : private std::tuple<std::string, int, Real, bool>
+{
+    using Base = std::tuple<std::string, int, Real, bool>;
+    Parameter(const std::string& name, int val)   : Base(name, val, Real{}, bool{}) {}
+    Parameter(const std::string& name, Real val)  : Base(name, int{}, val, bool{})  {}
+    Parameter(const std::string& name, bool val)  : Base(name, int{}, Real{}, val)  {}
+    bool myNameis(const std::string &a)    {return (a == std::get<0>(*this));}
+    template <typename T> T Get_Param();    // Parameter retrieval: Templ. fns defined in Boundary_Base.cpp
+};
 
 enum PLANE  {XPlane, YPlane, ZPlane};
 
@@ -46,33 +61,51 @@ class Boundary
 
 protected:
 
+    //--- Parameters for geometry
+    std::vector<Parameter> Parameters;
+
     //--- Nodes
     std::vector<SP_Node>    Nodes,          Symm_Nodes;
-    std::vector<SP_Node>    Aux_Nodes,      Symm_Aux_Nodes,     Ext_Nodes;
+    std::vector<SP_Node>    Aux_Nodes,      Symm_Aux_Nodes;
+    std::vector<SP_Node>    FreeSurface_Nodes;
+    std::vector<SP_Node>    Wall_Nodes;
+    std::vector<SP_Node>    Floor_Nodes;
 
     //--- Elements
     std::vector<SP_Geo>     Elements,       Symm_Elements;
-    std::vector<SP_Geo>     Aux_Elements,   Symm_Aux_Elements,  Ext_Elements;
+    std::vector<SP_Geo>     Aux_Elements,   Symm_Aux_Elements;
+    std::vector<SP_Geo>     FreeSurface_Elements;
+    std::vector<SP_Geo>     Wall_Elements;
+    std::vector<SP_Geo>     Floor_Elements;
+
+    bool VisWall = true;
+    bool VisFloor = true;
 
     //--- Geo flags
+    bool TriPanels = false;
     bool Cosine = true;
+    bool Panels_Outward = false;
 
     //--- Node access
     virtual int Node_ID(int A, int Z)           {}
     virtual int Aux_Node_ID(int A, int Z)       {}
     virtual int Ext_Node_ID(int A, int Z)       {}
+    virtual int Wall_ID(int A, int Z)           {}
 
-    CoordSys *Global_CS = NULL;
-    CoordSys *Inertial_CS = NULL;
-//    Vector3 Origin;
+    CoordSys *Global_CS = nullptr;
+    CoordSys *Inertial_CS = nullptr;
 
 public:
 
     //--- Constructor
-    Boundary()  {}
+    Boundary()  {
+        // if (!Global_CS)    Global_CS = new CoordSys();
+        // if (!Inertial_CS)  Inertial_CS = new CoordSys(Global_CS);
+    }
 
     //--- Geo setup
     virtual void Setup();
+    virtual void Set_Parameters(std::vector<Parameter> &Params)       {}
 
     //--- Import/Export
     virtual bool Read_Input_File(std::string &FilePath) {}
@@ -86,8 +119,12 @@ public:
     virtual void Generate_Elements()        {}
     virtual void Generate_Aux_Nodes()       {}
     virtual void Generate_Aux_Elements()    {}
-    virtual void Generate_Ext_Nodes()       {}
-    virtual void Generate_Ext_Elements()    {}
+    virtual void Generate_FreeSurface_Nodes()       {}
+    virtual void Generate_FreeSurface_Elements()    {}
+    virtual void Generate_Wall_Nodes()      {}
+    virtual void Generate_Wall_Elements()   {}
+    virtual void Generate_Floor_Nodes()     {}
+    virtual void Generate_Floor_Elements()  {}
 
     void Generate_Symmetry_Nodes(PLANE P);
     void Generate_Symmetry_Aux_Nodes(PLANE P);
@@ -99,21 +136,9 @@ public:
     virtual void Unify_Geometries()         {}
 
     //--- Geometry specification
-//    virtual void Set_GlobalCoordinateystem(CoordSys *CS)            {Global_CS = CS;}
-//    virtual void Set_Coordinateystem(CoordSys *CS)                  {Inertial_CS = CS;}
+    //    virtual void Set_GlobalCoordinateystem(CoordSys *CS)            {Global_CS = CS;}
+    //    virtual void Set_Coordinateystem(CoordSys *CS)                  {Inertial_CS = CS;}
     virtual void Set_CoordinateSystems(CoordSys *CSG, CoordSys *CSL) {Global_CS = CSG; Inertial_CS = CSL;}
-//    virtual void Set_Origin(Vector3 &O)                             {Origin = O;}
-
-    virtual void Set_Discretisation(std::vector<int> &D)            {}
-    virtual void Set_Auxiliary_Discretisation(std::vector<int> &D)  {}
-    virtual void Set_External_Discretisation(std::vector<int> &D)   {}
-
-    virtual void Set_Dimensions(std::vector<Real> &D)               {}
-    virtual void Set_Auxiliary_Dimensions(std::vector<Real> &D)     {}
-    virtual void Set_External_Dimensions(std::vector<Real> &D)      {}
-
-    virtual void Set_Flags(std::vector<bool> &D)                    {Cosine = D[0];}
-//    virtual void Set_Nodes(StateVector &D)                          {}
 
     //--- Geo Properties
     Real Volume = 0;
@@ -142,27 +167,54 @@ public:
     int N_Aux_Nodes()       {return Aux_Nodes.size();}
     int N_Elements()        {return Elements.size();}
     int N_Aux_Elements()    {return Aux_Elements.size();}
+    int N_WallRDim()        {return 0;}
+    int N_WallAziDim()      {return 0;}
 
     //--- Retrieve elements for visualisation
     void    Get_Nodes(std::vector<SP_Node> &L)              {StdAppend(L,Nodes);}
-    void    Get_Elements(std::vector<SP_Geo> &L)            {StdAppend(L,Elements);}
+    void    Get_Elements(std::vector<SP_Geo> &L)            {StdAppend(L,Elements); }
     void    Get_Symm_Elements(std::vector<SP_Geo> &L)       {StdAppend(L,Symm_Elements);}
     void    Get_Aux_Nodes(std::vector<SP_Node> &L)          {StdAppend(L,Aux_Nodes);}
     void    Get_Aux_Elements(std::vector<SP_Geo> &L)        {StdAppend(L,Aux_Elements);}
     void    Get_Aux_Symm_Elements(std::vector<SP_Geo> &L)   {StdAppend(L,Symm_Aux_Elements);}
-    void    Get_Ext_Nodes(std::vector<SP_Node> &L)          {StdAppend(L,Ext_Nodes);}
-    void    Get_Ext_Elements(std::vector<SP_Geo> &L)        {StdAppend(L,Ext_Elements);}
+    void    Get_FreeSurface_Nodes(std::vector<SP_Node> &L)  {StdAppend(L,FreeSurface_Nodes);}
+    void    Get_FreeSurface_Elements(std::vector<SP_Geo> &L){StdAppend(L,FreeSurface_Elements);}
+    void    Get_Floor_Elements(std::vector<SP_Geo> &L)      {StdAppend(L,Floor_Elements);}
+    void    Get_Wall_Elements(std::vector<SP_Geo> &L)       {StdAppend(L,Wall_Elements);}
+    void    Get_Wall_Nodes(std::vector<SP_Node> &L)         {StdAppend(L,Wall_Nodes);}
+    void    Get_Floor_Nodes(std::vector<SP_Node> &L)        {StdAppend(L,Floor_Nodes);}
+    void    Get_SurfaceWall_Elements(std::vector<SP_Geo> &L)     {
+        StdAppend(L,Elements);
+        if (VisWall)    StdAppend(L,Wall_Elements);
+        if (VisFloor)   StdAppend(L,Floor_Elements);
+    }
+
     CoordSys *Get_Inertial_CS()                             {return Inertial_CS;}
 
     //--- Visualisation Arrays
-//    StdVector Vis_Points;
+    //    StdVector Vis_Points;
     std::vector<CMatrix> RadSolArray;
     std::vector<CMatrix> DiffSolArray;
     std::vector<CMatrix> FS_Rad_Array;
     std::vector<CMatrix> FS_Scat_Array;
+    void Toggle_Wall_Vis(bool f)    {VisWall = f;}
+    void Toggle_Floor_Vis(bool f)   {VisFloor = f;}
+
+    //--- Retrieve parameters
+    template <class T>
+    inline bool Retrieve_Parameter(const std::string &a, T &val)
+    {
+        for (Parameter P : Parameters) {
+            if (P.myNameis(a)) {
+                val = P.Get_Param<T>();
+                return true;
+            }
+        }
+        return false;
+    }
 
     //--- Destructor
-    ~Boundary();
+    virtual ~Boundary();
 };
 
 }

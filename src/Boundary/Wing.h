@@ -62,17 +62,17 @@ public:
     void Generate_Elements();
     void Generate_Aux_Nodes()       {}
     void Generate_Aux_Elements()    {}
-    void Generate_Ext_Nodes()       {}
-    void Generate_Ext_Elements()    {}
+    void Generate_FreeSurface_Nodes()       {}
+    void Generate_FreeSurface_Elements()    {}
 
     //--- Geometry specification
-    void Set_Discretisation(std::vector<int> &D)            {NS = D[0]; NC = D[1];}
-    void Set_Auxiliary_Discretisation(std::vector<int> &D)  {}
-    void Set_External_Discretisation(std::vector<int> &D)   {}
+    // void Set_Discretisation(std::vector<int> &D)            {NS = D[0]; NC = D[1];}
+    // void Set_Auxiliary_Discretisation(std::vector<int> &D)  {}
+    // void Set_External_Discretisation(std::vector<int> &D)   {}
 
-    void Set_Dimensions(std::vector<Real> &D)               {Span = D[0]; C = D[1];}
-    void Set_Auxiliary_Dimensions(std::vector<Real> &D)     {}
-    void Set_External_Dimensions(std::vector<Real> &D)      {}
+    // void Set_Dimensions(std::vector<Real> &D)               {Span = D[0]; C = D[1];}
+    // void Set_Auxiliary_Dimensions(std::vector<Real> &D)     {}
+    // void Set_External_Dimensions(std::vector<Real> &D)      {}
 
     void Set_Flags(std::vector<bool> &D)                    {Cosine = D[0];}
 };

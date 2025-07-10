@@ -23,7 +23,6 @@
 
 *****************************************************************************/
 
-
 #ifndef THIN_DISC_H
 #define THIN_DISC_H
 
@@ -57,8 +56,8 @@ public:
     void Generate_Elements();
 //    virtual void Generate_Aux_Nodes()       {}
 //    virtual void Generate_Aux_Elements()    {}
-//    virtual void Generate_Ext_Nodes()       {}
-//    virtual void Generate_Ext_Elements()    {}
+//    virtual void Generate_FreeSurface_Nodes()       {}
+//    virtual void Generate_FreeSurface_Elements()    {}
 
 //    void Generate_Symmetry_Nodes(PLANE P);
 //    void Generate_Symmetry_Aux_Nodes(PLANE P);
@@ -74,17 +73,6 @@ public:
 //    virtual void Set_Coordinateystem(CoordSys *CS)                  {Inertial_CS = CS;}
 //    virtual void Set_CoordinateSystems(CoordSys *CSG, CoordSys *CSL) {Global_CS = CSG; Inertial_CS = CSL;}
 //    virtual void Set_Origin(Vector3 &O)                             {Origin = O;}
-
-    void Set_Discretisation(std::vector<int> &D)            {NR = D[0]; NA = D[1];}
-//    virtual void Set_Auxiliary_Discretisation(std::vector<int> &D)  {}
-//    virtual void Set_External_Discretisation(std::vector<int> &D)   {}
-
-    void Set_Dimensions(std::vector<Real> &D)               {R = D[0]; Depth = -D[1];}
-//    virtual void Set_Auxiliary_Dimensions(std::vector<Real> &D)     {}
-//    virtual void Set_External_Dimensions(std::vector<Real> &D)      {}
-
-//    virtual void Set_Flags(std::vector<bool> &D)                    {Cosine = D[0];}
-//    virtual void Set_Nodes(StateVector &D)                          {}
 
 //    //--- Geo Properties
 //    Real Volume = 0;

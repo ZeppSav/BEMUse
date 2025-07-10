@@ -26,6 +26,7 @@
 #define ELLIPSOID_H
 
 #include "Boundary_Base.h"
+#include "Numerical_Wave_Tank.h"
 
 namespace BEMUse
 {
@@ -36,12 +37,14 @@ protected:
 
     // Discretisation
     int NA, NZ;
+    int NRFS=0, NAFS=0;     // Discretisation of free surface panels
+
+    int NWall = 10;         // Discreitisation of wall panels
 
     // Geo vars
     Real a,b,c,Depth;
-
-    // Analytical solution
-    Real alpha0, beta0, gamma0;
+    Real RadFS = 0;         // Free-surface grid radius
+    Real Floor = 0;         // Depth of sea bed / floor
 
 public:
 
@@ -49,24 +52,16 @@ public:
     Ellipsoid()   {}
 
     //--- Geometry generation
-    void Generate_Nodes();
-    void Generate_Elements();
-    void Generate_Aux_Nodes()       {}
-    void Generate_Aux_Elements()    {}
-    void Generate_Ext_Nodes()       {}
-    void Generate_Ext_Elements()    {}
+    void Generate_Nodes() override;
+    void Generate_Elements() override;
+    void Generate_Aux_Nodes() override                               {}
+    void Generate_Aux_Elements()    override                         {}
 
     //--- Geometry specification
-    void Set_Discretisation(std::vector<int> &D)            {NA = D[0]; NZ = D[1];}
-    void Set_Auxiliary_Discretisation(std::vector<int> &D)  {}
-    void Set_External_Discretisation(std::vector<int> &D)   {}
-
-    void Set_Dimensions(std::vector<Real> &D)               {a = D[0]; b = D[1]; c = D[2]; Depth = -D[3];}
-    void Set_External_Dimensions(std::vector<Real> &D)      {}
+    void Set_Parameters(std::vector<Parameter> &Params) override;
 
     //--- ID retrieval
     int Node_ID(int A, int Z);
-//    int Aux_Node_ID(int A, int Z)       {}
 };
 
 class Semi_Ellipsoid : public Boundary      // Eg. Hemisphere
@@ -78,8 +73,9 @@ protected:
     int NA, NZ;
     int NRFS = 0;
     int NRES=0, NAES=0;
+    int NWall = 10;
     // Geo vars
-    Real a,b,c, RFS;
+    Real a,b,c, RFS, Floor;
 
 public:
 
@@ -91,24 +87,89 @@ public:
     void Generate_Elements();
     void Generate_Aux_Nodes();
     void Generate_Aux_Elements();
-    void Generate_Ext_Nodes();
-    void Generate_Ext_Elements();
+    void Generate_FreeSurface_Nodes();
+    void Generate_FreeSurface_Elements();
 
     //--- Geometry specification
-//    void Set_Discretisation(std::vector<int> &D)    {NA = D[0]; NZ = D[1]; NRFS = D[2];}
-//    void Set_Dimensions(std::vector<Real> &D)       {a = D[0]; b = D[1]; c = D[2];}
-
-    void Set_Discretisation(std::vector<int> &D)            {NA = D[0]; NZ = D[1];}
-    void Set_Auxiliary_Discretisation(std::vector<int> &D)  {NRFS = D[0];}
-    void Set_External_Discretisation(std::vector<int> &D)   {NAES = D[0]; NRES = D[1]; }
-
-    void Set_Dimensions(std::vector<Real> &D)               {a = D[0]; b = D[1]; c = D[2];}
-    void Set_External_Dimensions(std::vector<Real> &D)      {RFS = D[0];}
+    void Set_Parameters(std::vector<Parameter> &Params) override;
 
     //--- ID retrieval
     int Node_ID(int A, int Z);
     int Ext_Node_ID(int A, int Z);
-//    int Aux_Node_ID(int A, int Z)       {}
+    //    int Aux_Node_ID(int A, int Z)       {}
+};
+
+//--- Hybrid geometries: Ellipsoid submerged in a NWT
+
+class Ellipsoid_NWT : public Boundary
+{
+protected:
+    Boundary *Geo_Ellipsoid = nullptr;
+    Boundary *Geo_Tank = nullptr;
+
+public:
+    //--- Constructor
+    Ellipsoid_NWT()   {
+        Geo_Ellipsoid = new Ellipsoid();
+        Geo_Tank = new Numerical_Wave_Tank_Cylindrical();
+    }
+
+    // Geo setup
+    void Set_Parameters(std::vector<Parameter> &Params) override {
+        Geo_Ellipsoid->Set_Parameters(Params);
+        Geo_Tank->Set_Parameters(Params);
+    }
+
+    void Setup() override {
+
+        //--- Geometry is generated individually for both geos
+        Geo_Ellipsoid->Generate_Nodes();
+        Geo_Tank->Generate_Wall_Nodes();
+        Geo_Tank->Generate_Floor_Nodes();
+        Geo_Tank->Generate_FreeSurface_Nodes();
+
+        Geo_Ellipsoid->Generate_Elements();
+        Geo_Tank->Generate_Wall_Elements();
+        Geo_Tank->Generate_Floor_Elements();
+        Geo_Tank->Generate_FreeSurface_Elements();
+
+        //--- Now absorb these into this object
+        Geo_Ellipsoid->Get_Nodes(Nodes);
+        Geo_Tank->Get_Wall_Nodes(Wall_Nodes);
+        Geo_Tank->Get_Floor_Nodes(Floor_Nodes);
+        Geo_Tank->Get_FreeSurface_Nodes(FreeSurface_Nodes);
+
+        Geo_Ellipsoid->Get_Elements(Elements);
+        Geo_Tank->Get_Wall_Elements(Wall_Elements);
+        Geo_Tank->Get_Floor_Elements(Floor_Elements);
+        Geo_Tank->Get_FreeSurface_Elements(FreeSurface_Elements);
+
+        //--- Calculate geometric & kinematic quantities
+        // for (SP_Geo G : Elements)               G->Set_Centroid();
+        // for (SP_Geo G : Wall_Elements)          G->Set_Centroid();
+        // for (SP_Geo G : Floor_Elements)         G->Set_Centroid();
+        // for (SP_Geo G : FreeSurface_Elements)   G->Set_Centroid();
+
+        Calculate_GridParams();
+        Calculate_Volume();
+        Calculate_SurfaceArea();
+        Calculate_COB();
+        Set_Kin_Params();
+
+        std::cout   << "Geometry generated. "
+                  << Elements.size() << " elements, "
+                  << Aux_Elements.size() << " auxiliary (free surface) elements. "
+                  << FreeSurface_Elements.size() << " external (free surface) elements. \n";
+        std::cout   << "Surface area = " << Surface_Area
+                  << " m^2. Volume = " << Volume << " m^3"    << std::endl;
+    }
+
+    // Destructor
+    ~ Ellipsoid_NWT()
+    {
+        delete Geo_Ellipsoid;
+        delete Geo_Tank;
+    }
 };
 
 }

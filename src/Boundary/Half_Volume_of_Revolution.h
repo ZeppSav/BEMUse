@@ -59,17 +59,8 @@ public:
     void Generate_Elements();
     void Generate_Aux_Nodes();
     void Generate_Aux_Elements();
-    void Generate_Ext_Nodes()       {}
-    void Generate_Ext_Elements()    {}
-
-    //--- Geometry specification
-    void Set_Discretisation(std::vector<int> &D)            {NA = D[0]; NR = D[1]; NL = D[2];}
-    void Set_Auxiliary_Discretisation(std::vector<int> &D)  {NXAS = D[0]; NYAS = D[1];}
-    void Set_External_Discretisation(std::vector<int> &D)   {NXFS = D[0]; NYFS = D[1];}
-
-    void Set_Dimensions(std::vector<Real> &D)               {R = D[0]; L = D[1];}
-    void Set_External_Dimensions(std::vector<Real> &D)      {XFS = D[0]; YFS = D[1];}
-
+    void Generate_FreeSurface_Nodes()       {}
+    void Generate_FreeSurface_Elements()    {}
 
     int Node_ID(int A, int Z);
     int Aux_Node_ID(int A, int Z)   {}

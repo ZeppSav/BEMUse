@@ -360,7 +360,7 @@ void BEMUser_Interface::on_ExportButton_clicked()
 
 //    // Debug out external node positions
 //    std::vector<BEMUse::SP_Node> ExtNodes;
-//    Boundary->Get_Ext_Nodes(ExtNodes);
+//    Boundary->Get_FreeSurface_Nodes(ExtNodes);
 //    for (BEMUse::SP_Node N : ExtNodes)
 //    {
 //        Vector3 P = N->Position_Local();

@@ -67,7 +67,7 @@ void Volume_of_Revolution::Generate_Aux_Nodes()
 //    std::cout << "Aux_Nodes Size: " <<  Aux_Nodes.size() << std::endl;
 }
 
-void Volume_of_Revolution::Generate_Ext_Nodes()
+void Volume_of_Revolution::Generate_FreeSurface_Nodes()
 {
     // A volume of revolution has as it's interesting plane a circle.
 
@@ -82,11 +82,11 @@ void Volume_of_Revolution::Generate_Ext_Nodes()
             Real u = j*TwoPI/NA;
 //            Vector3 BP  ( r*cos(u) + Origin(0), r*sin(u) + Origin(1), Origin(2));
             Vector3 BP  ( r*cos(u), r*sin(u), 0);
-            Ext_Nodes.push_back(std::make_shared<Node>(Inertial_CS,BP));
+            FreeSurface_Nodes.push_back(std::make_shared<Node>(Inertial_CS,BP));
         }
     }
 
-    for (int i=0; i<Ext_Nodes.size(); i++) Ext_Nodes[i]->ID = i;
+    for (int i=0; i<FreeSurface_Nodes.size(); i++) FreeSurface_Nodes[i]->ID = i;
 }
 
 void Volume_of_Revolution::Generate_Elements()
@@ -129,17 +129,17 @@ void Volume_of_Revolution::Generate_Aux_Elements()
     for (int i=0; i<Aux_Elements.size(); i++)  Aux_Elements[i]->Set_Centroid();
 }
 
-void Volume_of_Revolution::Generate_Ext_Elements()
+void Volume_of_Revolution::Generate_FreeSurface_Elements()
 {
     // Central quadratic elements
     for (int z=0; z<NRES; z++){
-        for (int i=0; i<NA; i++)    Ext_Elements.push_back(std::make_shared<Quad_Element>(  Ext_Nodes[Ext_Node_ID(i,z+1)],
-                                                                                            Ext_Nodes[Ext_Node_ID(i+1,z+1)],
-                                                                                            Ext_Nodes[Ext_Node_ID(i+1,z)],
-                                                                                            Ext_Nodes[Ext_Node_ID(i,z)]));
+        for (int i=0; i<NA; i++)    FreeSurface_Elements.push_back(std::make_shared<Quad_Element>(  FreeSurface_Nodes[Ext_Node_ID(i,z+1)],
+                                                                                            FreeSurface_Nodes[Ext_Node_ID(i+1,z+1)],
+                                                                                            FreeSurface_Nodes[Ext_Node_ID(i+1,z)],
+                                                                                            FreeSurface_Nodes[Ext_Node_ID(i,z)]));
     }
 
-    for (int i=0; i<Ext_Elements.size(); i++)  Ext_Elements[i]->Set_Centroid();
+    for (int i=0; i<FreeSurface_Elements.size(); i++)  FreeSurface_Elements[i]->Set_Centroid();
 }
 
 int Volume_of_Revolution::Node_ID(int A, int Z)
@@ -164,6 +164,24 @@ int Volume_of_Revolution::Ext_Node_ID(int A, int Z)
 //------Cylinder--------
 //----------------------
 
+void Half_Cylinder::Set_Parameters(std::vector<Parameter> &Params)
+{
+    StdAppend(Parameters, Params);
+    for (Parameter P : Parameters)
+    {
+        if (P.myNameis("Radius"))                           R = P.Get_Param<Real>();
+        if (P.myNameis("Draft"))                            Z = -P.Get_Param<Real>();
+        if (P.myNameis("FreeSurface_Radius"))               RFS = P.Get_Param<Real>();
+        if (P.myNameis("NPanels_Radial"))                   NR = P.Get_Param<int>();
+        if (P.myNameis("NPanels_Vertical"))                 NV = P.Get_Param<int>();
+        if (P.myNameis("NPanels_Azimuthal"))                NA = P.Get_Param<int>();
+        if (P.myNameis("NPanels_FreeSurface_Radial"))       NRES = P.Get_Param<int>();
+        if (P.myNameis("NPanels_FreeSurface_Int_Radial"))   NRFS = P.Get_Param<int>();
+        if (P.myNameis("Cosine_Disc"))                      Cosine = P.Get_Param<bool>();
+        if (P.myNameis("Triangular_Panels"))                TriPanels = P.Get_Param<bool>();
+    }
+}
+
 void Half_Cylinder::Generate_Nodes()
 {
     // We generate the perimeter, and then call the node generation routine from Volume_of_Revolution
@@ -183,6 +201,30 @@ void Half_Cylinder::Generate_Nodes()
 //-------------------------------
 //------Tapered Spar Buoy--------
 //-------------------------------
+
+void Tapered_SparBuoy::Set_Parameters(std::vector<Parameter> &Params)
+{
+    StdAppend(Parameters, Params);
+    for (Parameter P : Parameters)
+    {
+        if (P.myNameis("Lower_Radius"))                     RB = P.Get_Param<Real>();
+        if (P.myNameis("Upper_Radius"))                     RT = P.Get_Param<Real>();
+        if (P.myNameis("Draft"))                            Z = -P.Get_Param<Real>();
+        if (P.myNameis("Height_Taper_Begin"))               H1 = P.Get_Param<Real>();
+        if (P.myNameis("Height_Taper_End"))                 H2 = P.Get_Param<Real>();
+        if (P.myNameis("FreeSurface_Radius"))               RFS = P.Get_Param<Real>();
+        if (P.myNameis("NPanels_Radial"))                   NR = P.Get_Param<int>();
+        if (P.myNameis("NPanels_Vertical_Section1"))        NV1 = P.Get_Param<int>();
+        if (P.myNameis("NPanels_Vertical_Section2"))        NV2 = P.Get_Param<int>();
+        if (P.myNameis("NPanels_Vertical_Section3"))        NV3 = P.Get_Param<int>();
+        if (P.myNameis("NPanels_Azimuthal"))                NA = P.Get_Param<int>();
+        if (P.myNameis("NPanels_FreeSurface_Radial"))       NRES = P.Get_Param<int>();
+        if (P.myNameis("NPanels_FreeSurface_Int_Radial"))   NRFS = P.Get_Param<int>();
+        if (P.myNameis("Cosine_Disc"))                      Cosine = P.Get_Param<bool>();
+        if (P.myNameis("Triangular_Panels"))                TriPanels = P.Get_Param<bool>();
+    }
+    R = RT;
+}
 
 void Tapered_SparBuoy::Generate_Nodes()
 {
@@ -211,6 +253,30 @@ void Tapered_SparBuoy::Generate_Nodes()
 //------Sub Leg------------------
 //-------------------------------
 
+void Spar_Leg::Set_Parameters(std::vector<Parameter> &Params)
+{
+    StdAppend(Parameters, Params);
+    for (Parameter P : Parameters)
+    {
+        if (P.myNameis("Leg_Lower_Radius"))                 RB = P.Get_Param<Real>();
+        if (P.myNameis("Leg_Upper_Radius"))                 RT = P.Get_Param<Real>();
+        if (P.myNameis("Draft"))                            Z = -P.Get_Param<Real>();
+        if (P.myNameis("Heave_Plate_Height"))               H1 = P.Get_Param<Real>();
+        if (P.myNameis("FreeSurface_Radius"))               RFS = P.Get_Param<Real>();
+
+        if (P.myNameis("NPanels_Azimuthal"))                NA = P.Get_Param<int>();
+        if (P.myNameis("NPanels_Radial_Base"))              N1 = P.Get_Param<int>();
+        if (P.myNameis("NPanels_Vertical_HeavePlate"))      N2 = P.Get_Param<int>();
+        if (P.myNameis("NPanels_Horizontal_HeavePlate"))    N3 = P.Get_Param<int>();
+        if (P.myNameis("NPanels_Vertical"))                 N4 = P.Get_Param<int>();
+        if (P.myNameis("NPanels_FreeSurface_Radial"))       NRES = P.Get_Param<int>();
+        if (P.myNameis("NPanels_FreeSurface_Int_Radial"))   NRFS = P.Get_Param<int>();
+        if (P.myNameis("Cosine_Disc"))                      Cosine = P.Get_Param<bool>();
+        if (P.myNameis("Triangular_Panels"))                TriPanels = P.Get_Param<bool>();
+    }
+    R = RT;
+}
+
 void Spar_Leg::Generate_Nodes()
 {
     // We generate the perimeter, and then call the node generation routine from Volume_of_Revolution
@@ -233,5 +299,3 @@ void Spar_Leg::Generate_Nodes()
 }
 
 }
-
-

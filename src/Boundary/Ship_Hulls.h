@@ -37,38 +37,40 @@ protected:
 
     // Geo Params
     int NX, NZ;
-    Real L, B, T;
+    Real L=10., B=1., T=1.;
 
+    // Free surface vars
+    Real XFSMax=0, XFSMin=0;    // X FS grid max, X FS grid min
+    Real XHS=0, XHK=0;          // X hull starboard, X hull keel
+    Real YFS=0;                 // The Y value of the free surface grid (assume constant for now)
+    std::vector<Vector3> Hull_Perim, TriHull_Perim;    // Positions of starting x & y-points for free surface mesh
+    int NXK=0, NXH=0, NXS=0, NYFS=0;
+
+    std::vector<SP_Node> LeftNodes, RightNodes;
+    std::vector<SP_Node> TriLeftNodes, TriRightNodes;
+    std::vector<SP_Node> Tri_FS_Nodes;
 
 public:
 
     //--- Constructor
     Ship_Hull()       {}
 
-    //--- Geometry specification
-    void Set_Discretisation(std::vector<int> &D)            {NX = D[0]; NZ = D[1];}
-    void Set_Auxiliary_Discretisation(std::vector<int> &D)  {}
-    void Set_External_Discretisation(std::vector<int> &D)   {}
-
-    void Set_Dimensions(std::vector<Real> &D)               {L = D[0]; B = D[1]; T = D[2];}
-    void Set_External_Dimensions(std::vector<Real> &D)      {}
-
     //--- Geometry functions
-    virtual void Generate_Nodes()               {}
-    virtual void Generate_Aux_Nodes()           {}
+    virtual void Generate_Nodes()                   {}
+    virtual void Generate_Aux_Nodes()               {}
     virtual void Generate_Elements();
-    virtual void Generate_Aux_Elements()        {}
+    virtual void Generate_FreeSurface_Elements()    {}
 
-    //--- ID retrieval
-    int Node_ID(int X, int Z, int L);
+    //--- Individual functions for quadratic and triangular elements
+    void Generate_Quadratic_Elements();
+    void Generate_Triangular_Elements();
 };
 
 // Possible alternatives:
-// S175, Kriso Container,  Hamburg Test Case (HTC)
+// S175, Kriso Container, Hamburg Test Case (HTC)
 
 class Wigley_Hull : public Ship_Hull
 {
-
 
 public:
 
@@ -76,7 +78,18 @@ public:
     Wigley_Hull()       {}
 
     //--- Geometry functions
+    void Set_Parameters(std::vector<Parameter> &Params) override;
+
     void Generate_Nodes();
+    void Generate_Aux_Nodes();
+    void Generate_FreeSurface_Nodes();
+
+    void Generate_Aux_Elements();
+    void Generate_FreeSurface_Elements();
+    void Correct_Panel_Orientation(std::vector<SP_Geo> *Panels, std::vector<SP_Node> *Nds);
+
+    void Hull_Node(Real xn, Real yn, Vector3 &p, Vector3 &n);
+    void FS_Node(Real xn, Real yn, Vector3 &p, int zone);
 
 };
 

@@ -121,7 +121,7 @@ namespace BEMUse
     {
         // This simply visualises the elements
         std::vector<SP_Geo> Els;
-        B->Get_Ext_Elements(Els);
+        B->Get_FreeSurface_Elements(Els);
         for (SP_Geo E : Els) Vis_Outline(E);
     }
 
@@ -263,7 +263,7 @@ namespace BEMUse
         // This visualises the free surface
         // Collect node positions
         std::vector<SP_Node> Nodes;
-        B->Get_Ext_Nodes(Nodes);
+        B->Get_FreeSurface_Nodes(Nodes);
         if (Nodes.empty())    return;
 
         Real TFac = (exp(CReal(0,Time))).real();
@@ -278,7 +278,7 @@ namespace BEMUse
 
         // Vis Panels
         std::vector<SP_Geo> Els;
-        B->Get_Ext_Elements(Els);
+        B->Get_FreeSurface_Elements(Els);
         if (Els.empty())    return;
 
         for (int i=0; i<Els.size(); i++){
@@ -294,7 +294,7 @@ namespace BEMUse
         // This visualises the free surface
         // Collect node positions
         std::vector<SP_Node> Nodes;
-        B->Get_Ext_Nodes(Nodes);
+        B->Get_FreeSurface_Nodes(Nodes);
         if (Nodes.empty())    return;
 
         Real TFac = (exp(CReal(0,Time))).real();
@@ -309,7 +309,7 @@ namespace BEMUse
 
         // Vis Panels
         std::vector<SP_Geo> Els;
-        B->Get_Ext_Elements(Els);
+        B->Get_FreeSurface_Elements(Els);
         if (Els.empty())    return;
 
         for (int i=0; i<Els.size(); i++){

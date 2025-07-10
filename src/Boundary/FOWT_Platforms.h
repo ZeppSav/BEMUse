@@ -43,6 +43,34 @@ public:
     OC3_SparBuoy()  {}
 
     //--- Geometry specification
+    void Set_Parameters(std::vector<Parameter> &Params) override
+    {
+        StdAppend(Parameters, Params);
+        for (Parameter P : Parameters)
+        {
+            if (P.myNameis("Scaling_Factor"))                   ScaleFac = P.Get_Param<Real>();
+            if (P.myNameis("FreeSurface_Radius"))               RFS = P.Get_Param<Real>();
+            if (P.myNameis("NPanels_Radial"))                   NR = P.Get_Param<int>();
+            if (P.myNameis("NPanels_Vertical_Section1"))        NV1 = P.Get_Param<int>();
+            if (P.myNameis("NPanels_Vertical_Section2"))        NV2 = P.Get_Param<int>();
+            if (P.myNameis("NPanels_Vertical_Section3"))        NV3 = P.Get_Param<int>();
+            if (P.myNameis("NPanels_Azimuthal"))                NA = P.Get_Param<int>();
+            if (P.myNameis("NPanels_FreeSurface_Radial"))       NRES = P.Get_Param<int>();
+            if (P.myNameis("NPanels_FreeSurface_Int_Radial"))   NRFS = P.Get_Param<int>();
+            if (P.myNameis("Cosine_Disc"))                      Cosine = P.Get_Param<bool>();
+            if (P.myNameis("Triangular_Panels"))                TriPanels = P.Get_Param<bool>();
+        }
+
+        // Set floater dimensions
+        RB = 4.7*ScaleFac;
+        RT = 3.25*ScaleFac;
+        Z = -120*ScaleFac;
+        H1 = 108*ScaleFac;
+        H2 = 8*ScaleFac;
+        R = RT;
+    }
+
+    //--- Geometry specification
     void Set_Dimensions(std::vector<Real> &D)
     {
         ScaleFac = D[0];

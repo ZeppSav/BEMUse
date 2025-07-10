@@ -54,19 +54,11 @@ public:
     void Generate_Elements();
     void Generate_Aux_Nodes();
     void Generate_Aux_Elements();
-    void Generate_Ext_Nodes();
-    void Generate_Ext_Elements();
+    void Generate_FreeSurface_Nodes();
+    void Generate_FreeSurface_Elements();
 
     //--- Geometry specification
-//    void Set_Discretisation(std::vector<int> &Disc)    {NX=Disc[0]; NY=Disc[1]; NZ=Disc[2]; NXFS=Disc[3]; NYFS=Disc[4];}
-//    void Set_Dimensions(std::vector<Real> &Dim)       {L=Dim[0]; W=Dim[1]; D=Dim[2]; LFS=Dim[3]; WFS=Dim[4];}
-
-    void Set_Discretisation(std::vector<int> &Disc)            {NX=Disc[0]; NY=Disc[1]; NZ=Disc[2];}
-    void Set_Auxiliary_Discretisation(std::vector<int> &Disc)  {}
-    void Set_External_Discretisation(std::vector<int> &Disc)   {NXFS=Disc[0]; NYFS=Disc[1];}
-
-    void Set_Dimensions(std::vector<Real> &Dim)               {L=Dim[0]; W=Dim[1]; D=Dim[2]; }
-    void Set_External_Dimensions(std::vector<Real> &Dim)      {LFS=Dim[0]; WFS=Dim[1];}
+    void Set_Parameters(std::vector<Parameter> &Params) override;
 
     //--- ID retrieval
     int Node_ID(int A, int Z)       {}

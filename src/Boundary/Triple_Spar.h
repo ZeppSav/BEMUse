@@ -48,7 +48,7 @@ protected:
     bool ShiftRearwards = false;
 
     // Geo parameters
-    Real R_Leg;
+    Real R_Leg, R_Loc;
     Real ScaleFac = 1.0;
     Real RFS = 1.0;
     Vector3 C1 = Vector3::Zero();   // Leg 1 origin
@@ -67,15 +67,8 @@ public:
     //--- Constructor
     Triple_Spar();
 
-//    //--- Geometry specification
-    void Set_Discretisation(std::vector<int> &D);
-    void Set_Auxiliary_Discretisation(std::vector<int> &D);
-    void Set_External_Discretisation(std::vector<int> &D);
-
-    void Set_Dimensions(std::vector<Real> &D);
-    void Set_External_Dimensions(std::vector<Real> &D);
-
-    void Set_Flags(std::vector<bool> &D);
+    //--- Geometry specification
+    void Set_Parameters(std::vector<Parameter> &Params) override;
 
     //--- Geometry functions
     void Generate_Nodes();
@@ -83,6 +76,9 @@ public:
 
     void Generate_Elements();
     void Generate_Aux_Elements();
+
+    void Generate_FreeSurface_Nodes();
+    void Generate_FreeSurface_Elements();
 
     //--- Unify multiple geos
     void Unify_Geometries();
@@ -99,13 +95,11 @@ public:
     SemiSub_OC4();
 
     //--- Geometry specification
-    void Set_Discretisation(std::vector<int> &D);
-    void Set_Dimensions(std::vector<Real> &D);
+    void Set_Parameters(std::vector<Parameter> &Params) override;
 
     //--- Geometry calculations (Hard coded)
-    void Set_Kin_Params();
+    void Set_Kin_Params() override;
 };
-
 }
 
 #endif // TRIPLE_SPAR_H

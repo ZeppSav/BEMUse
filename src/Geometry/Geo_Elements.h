@@ -44,6 +44,7 @@ public:
     //--- Geometry construction
     virtual void Set_Centroid()         {}
     virtual void Set_Quad_Nodes()       {}
+    virtual void Reorder_Nodes()        {}
 
     //--- Geometry construction
     std::vector<SP_Node>    Nodes;
@@ -120,6 +121,9 @@ public:
     //--- Geometry construction
     void Set_Centroid();
     void Set_Quad_Nodes();
+    void Reorder_Nodes() {
+        std::swap(Nodes[0],Nodes[2]);
+    }
 };
 
 class Quad_Element : public Area_Element
@@ -144,6 +148,10 @@ public:
     //--- Geometry construction
     void Set_Centroid();
     void Set_Quad_Nodes();
+    void Reorder_Nodes() {
+        std::swap(Nodes[0],Nodes[3]);
+        std::swap(Nodes[1],Nodes[2]);
+    }
 };
 
 typedef std::shared_ptr<Geometry_Element> SP_Geo;

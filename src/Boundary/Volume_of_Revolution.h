@@ -61,8 +61,8 @@ public:
     void Generate_Elements();
     void Generate_Aux_Nodes();
     void Generate_Aux_Elements();
-    void Generate_Ext_Nodes();
-    void Generate_Ext_Elements();
+    void Generate_FreeSurface_Nodes();
+    void Generate_FreeSurface_Elements();
 
     int Node_ID(int A, int Z);
     int Aux_Node_ID(int A, int Z)       {}
@@ -84,12 +84,7 @@ public:
     Half_Cylinder()   {}
 
     //--- Geometry specification
-    void Set_Discretisation(std::vector<int> &D)            {NA = D[0]; NR = D[1]; NV = D[2];}
-    void Set_Auxiliary_Discretisation(std::vector<int> &D)  {NRFS = D[0];}
-    void Set_External_Discretisation(std::vector<int> &D)   {NRES = D[0];}
-
-    void Set_Dimensions(std::vector<Real> &D)               {R = D[0]; Z = -D[1];}
-    void Set_External_Dimensions(std::vector<Real> &D)      {RFS = D[0];}
+    void Set_Parameters(std::vector<Parameter> &Params) override;
 
     //--- Geometry functions
     void Generate_Nodes();
@@ -111,12 +106,7 @@ public:
     Tapered_SparBuoy()   {}
 
     //--- Geometry specification
-    void Set_Discretisation(std::vector<int> &D)            {NA = D[0]; NR = D[1]; NV1 = D[2]; NV2 = D[3]; NV3 = D[4]; }
-    void Set_Auxiliary_Discretisation(std::vector<int> &D)  {NRFS = D[0]; }
-    void Set_External_Discretisation(std::vector<int> &D)   {NRES = D[0];}
-
-    void Set_Dimensions(std::vector<Real> &D)               {RB = D[0];  RT = D[1]; Z = -D[2];  H1 = D[3];  H2 = D[4]; }
-    void Set_External_Dimensions(std::vector<Real> &D)      {RFS = D[0]; R = RT;}
+    void Set_Parameters(std::vector<Parameter> &Params) override;
 
     //--- Geometry functions
     void Generate_Nodes();
@@ -137,12 +127,7 @@ public:
     Spar_Leg()   {}
 
     //--- Geometry specification
-    void Set_Discretisation(std::vector<int> &D)            {NA = D[0]; N1 = D[1]; N2 = D[2]; N3 = D[3]; N4 = D[4];}
-    void Set_Auxiliary_Discretisation(std::vector<int> &D)  {NRFS = D[0];}
-    void Set_External_Discretisation(std::vector<int> &D)   {NRES = D[0];}
-
-    void Set_Dimensions(std::vector<Real> &D)               {RB = D[0];  RT = D[1]; Z = -D[2];  H1 = D[3]; R = RT;}
-    void Set_External_Dimensions(std::vector<Real> &D)      {RFS = D[0];}
+    void Set_Parameters(std::vector<Parameter> &Params) override;
 
     //--- Geometry functions
     void Generate_Nodes();

@@ -7,6 +7,11 @@
 namespace BEMUse
 {
 
+//--- Parameter template functions
+template <> int     Parameter::Get_Param<int>()    {return std::get<1>(*this);}
+template <> Real    Parameter::Get_Param<Real>()   {return std::get<2>(*this);}
+template <> bool    Parameter::Get_Param<bool>()   {return std::get<3>(*this);}
+
 //--- Geo setup
 
 void Boundary::Setup()
@@ -18,14 +23,14 @@ void Boundary::Setup()
     Generate_Elements();
     Generate_Aux_Nodes();
     Generate_Aux_Elements();
-    Generate_Ext_Nodes();
-    Generate_Ext_Elements();
+    Generate_FreeSurface_Nodes();
+    Generate_FreeSurface_Elements();
     Unify_Geometries();
 
     //--- Calculate geometric & kinematic quantities
     for (SP_Geo G : Elements)       G->Set_Centroid();
     for (SP_Geo G : Aux_Elements)   G->Set_Centroid();
-    for (SP_Geo G : Ext_Elements)   G->Set_Centroid();
+    for (SP_Geo G : FreeSurface_Elements)   G->Set_Centroid();
 
     Calculate_GridParams();
     Calculate_Volume();
@@ -36,7 +41,7 @@ void Boundary::Setup()
     std::cout   << "Geometry generated. "
                 << Elements.size() << " elements, "
                 << Aux_Elements.size() << " auxiliary (free surface) elements. "
-                << Ext_Elements.size() << " external (free surface) elements. \n";
+                << FreeSurface_Elements.size() << " external (free surface) elements. \n";
     std::cout   << "Surface area = " << Surface_Area
                 << " m^2. Volume = " << Volume << " m^3"    << std::endl;
 }
@@ -312,13 +317,13 @@ Boundary::~Boundary()
     Elements.clear();
     Aux_Elements.clear();
     Symm_Elements.clear();
-    Ext_Elements.clear();
+    FreeSurface_Elements.clear();
 
     // Clear nodes
     Nodes.clear();
     Aux_Nodes.clear();
     Symm_Nodes.clear();
-    Ext_Nodes.clear();
+    FreeSurface_Nodes.clear();
 }
 
 }

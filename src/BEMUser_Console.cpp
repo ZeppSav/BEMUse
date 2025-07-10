@@ -17,7 +17,7 @@
 #include "Boundary/Barge.h"
 
 //--- Solver params
-#include "omp.h"
+// #include "omp.h"
 
 //--- Solver types
 #include "Solver/Aerodynamic_Solver.h"
@@ -126,15 +126,15 @@ void BEMUse_Console::Specify_Geometry(int argc, char *argv[])
     Flagfile.close();
 
     // Specify boundary values
-    if (!Flags.empty())     Boundary->Set_Flags(Flags);
+    // if (!Flags.empty())     Boundary->Set_Flags(Flags);
 
-    if (!Dim.empty())       Boundary->Set_Dimensions(Dim);
-    if (!DimAux.empty())    Boundary->Set_Auxiliary_Dimensions(DimAux);
-    if (!DimExt.empty())    Boundary->Set_External_Dimensions(DimExt);
+    // if (!Dim.empty())       Boundary->Set_Dimensions(Dim);
+    // if (!DimAux.empty())    Boundary->Set_Auxiliary_Dimensions(DimAux);
+    // if (!DimExt.empty())    Boundary->Set_External_Dimensions(DimExt);
 
-    if (!Disc.empty())      Boundary->Set_Discretisation(Disc);
-    if (!DiscAux.empty())   Boundary->Set_Auxiliary_Discretisation(DiscAux);
-    if (!DiscExt.empty())   Boundary->Set_External_Discretisation(DiscExt);
+    // if (!Disc.empty())      Boundary->Set_Discretisation(Disc);
+    // if (!DiscAux.empty())   Boundary->Set_Auxiliary_Discretisation(DiscAux);
+    // if (!DiscExt.empty())   Boundary->Set_External_Discretisation(DiscExt);
 
     //--- Generate geometry
     Boundary->Setup();

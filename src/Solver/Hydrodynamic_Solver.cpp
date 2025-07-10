@@ -20,7 +20,7 @@ void Hydrodynamic_Radiation_Solver::Create_Panels(Boundary *B)
     std::vector<SP_Geo> Geo, GeoRefl;
     B->Get_Elements(Geo);
     B->Get_Symm_Elements(GeoRefl);
-    B->Get_Ext_Elements(FS_Geo);
+    B->Get_FreeSurface_Elements(FS_Geo);
     NPA = Geo.size();               // Set number of geometry surface panels here
 
     //--- Are we carrying out irregular freqency removal? Then include also the auxiliary panels & reflected auxiliary panels
@@ -179,7 +179,7 @@ void Hydrodynamic_Radiation_Solver::Prepare_FS_Linear_System(Boundary *B)
     // at the external free surface positions. This can be precalculated as with the surface problem solution.
 
     // Generate list of node positions
-    B->Get_Ext_Nodes(Wave_Nodes);
+    B->Get_FreeSurface_Nodes(Wave_Nodes);
     if (Wave_Nodes.empty()) return;
 
     int NWN = Wave_Nodes.size();

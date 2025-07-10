@@ -54,27 +54,13 @@ public:
     //--- Constructor
     Horizontal_Volume_of_Revolution()   {}
 
-    //--- Geometry specification
-//    void Set_Origin(Vector3 &O)                     {Origin = O;}
-//    void Set_Flags(std::vector<bool> &D)            {}
-//    void Set_Nodes(StateVector &D)                  {for (Vector V : D) Perimeter.push_back(Vector3(V(0),V(1),V(2)));}
-
-    //--- Geometry specification
-    void Set_Discretisation(std::vector<int> &D)            {NA = D[0]; NR = D[1]; NL = D[2];}
-//    void Set_Auxiliary_Discretisation(std::vector<int> &D)  {NRFS = D[0];}
-//    void Set_External_Discretisation(std::vector<int> &D)   {NRES = D[0];}
-
-    void Set_Dimensions(std::vector<Real> &D)               {R = D[0]; Depth = -D[1]; L = D[2];}
-//    void Set_External_Dimensions(std::vector<Real> &D)      {RFS = D[0];}
-
-
     //--- Geometry functions
     void Generate_Nodes();
     void Generate_Elements();
 //    void Generate_Aux_Nodes();
 //    void Generate_Aux_Elements();
-//    void Generate_Ext_Nodes();
-//    void Generate_Ext_Elements();
+//    void Generate_FreeSurface_Nodes();
+//    void Generate_FreeSurface_Elements();
 
     int Node_ID(int A, int Z);
 //    int Aux_Node_ID(int A, int Z)       {}

@@ -77,60 +77,30 @@ void Grid_Options::on_GenerateButton_clicked()
 
     switch (GeoType)
     {
-        //--- Template geometries
-        case No_Geo:            {return;   break;}  // Jump out if no geometry type has been selected.
-        case Semi_Ellipsoid:    {Boundary = new BEMUse::Semi_Ellipsoid();   break;}
-        case Ellipsoid:         {Boundary = new BEMUse::Ellipsoid();        break;}
-        case Half_Cylinder:     {Boundary = new BEMUse::Half_Cylinder();    break;}
-        case Barge:             {Boundary = new BEMUse::Barge();            break;}
+    //--- Template geometries
+    case No_Geo:            {return;   break;}  // Jump out if no geometry type has been selected.
+    case Semi_Ellipsoid:    {Generate_SemiEllipsoid();          break;}
+    case Ellipsoid:         {Generate_Ellipsoid();              break;}
+    case Half_Cylinder:     {Generate_Cylinder();               break;}
+    case Barge:             {Generate_Barge();                  break;}
+        // case NWT:               {Generate_Numerical_Wave_Tank();    break;}
 
-        // FOWT platforms
-        case Tapered_SparBuoy:  {Boundary = new BEMUse::Tapered_SparBuoy(); break;}
-        case OC3_SparBuoy:      {Boundary = new BEMUse::OC3_SparBuoy();     break;}
-        case Triple_Spar:       {Boundary = new BEMUse::Triple_Spar();      break;}
-        case SemiSub_OC4:       {Boundary = new BEMUse::SemiSub_OC4();      break;}
+        //--- FOWT platforms
+    case Tapered_SparBuoy:  {Generate_SparBuoy();               break;}
+    case OC3_SparBuoy:      {Generate_OC3SparBuoy();            break;}
+    case Triple_Spar:       {Generate_TripleSpar();             break;}
+    case SemiSub_OC4:       {Generate_OC4TripleSpar();          break;}
 
-        // Ship geometries
-        case Wigley_Hull:       {Boundary = new BEMUse::Wigley_Hull();      break;}
+        //--- Ship geometries
+    case Wigley_Hull:       {Generate_WigleyHull();             break;}
 
-        default: break;
+    default: break;
     }
 
-    //--- Specify dimensions & discretisation
-
-    std::vector<Real> Dim, DimAux, DimExt;
-    std::vector<int> Disc, DiscAux, DiscExt;
-    std::vector<bool> Flags;
-
-    for (int i=0; i<NDims; i++)             Dim.push_back(DimSpins[i]->value());
-    for (int i=0; i<NDimsAux; i++)          DimAux.push_back(AuxDimSpins[i]->value());
-    for (int i=0; i<NDimsExt; i++)          DimExt.push_back(ExtDimSpins[i]->value());
-
-    for (int i=0; i<NDisc; i++)             Disc.push_back(DiscSpins[i]->value());
-    for (int i=0; i<NDiscAux; i++)          DiscAux.push_back(AuxDiscSpins[i]->value());
-    for (int i=0; i<NDiscExt; i++)          DiscExt.push_back(ExtDiscSpins[i]->value());
-
-    if (ui->CosineDist->isChecked())        Flags.push_back(true);
-    else                                    Flags.push_back(false);
-    for (int i=0; i<CheckBoxes.size(); i++) Flags.push_back(CheckBoxes[i]->isChecked());
-
-    Boundary->Set_Flags(Flags);
-
-    Boundary->Set_Dimensions(Dim);
-    Boundary->Set_Auxiliary_Dimensions(DimAux);
-    Boundary->Set_External_Dimensions(DimExt);
-
-    Boundary->Set_Discretisation(Disc);
-    Boundary->Set_Auxiliary_Discretisation(DiscAux);
-    Boundary->Set_External_Discretisation(DiscExt);
-
-    //--- Generate geometry
+    // Now setup geometry and close geo dialogue
+    Boundary->Set_Parameters(Parameters);
     Boundary->Setup();
-
-    //--- Pass geometry to BEMUse Main object
     Pass_Geometry(Boundary);
-
-    //--- Close window
     this->close();
 }
 
@@ -194,15 +164,15 @@ void Grid_Options::on_ButtonSemiEllipsoid_clicked()
     Darken_Button(ui->ButtonSemiEllipsoid);
 
     DimLabs[0]->setText("Semiaxis a"); DimLabs[0]->show(); DimSpins[0]->setValue(1.0); DimSpins[0]->show(); NDims++;
-    DimLabs[1]->setText("Semiaxis b"); DimLabs[1]->show(); DimSpins[1]->setValue(2.0); DimSpins[1]->show(); NDims++;
+    DimLabs[1]->setText("Semiaxis b"); DimLabs[1]->show(); DimSpins[1]->setValue(1.0); DimSpins[1]->show(); NDims++;
     DimLabs[2]->setText("Semiaxis c"); DimLabs[2]->show(); DimSpins[2]->setValue(1.0); DimSpins[2]->show(); NDims++;
-    DimLabsExt[0]->setText("Radial factor"); DimLabsExt[0]->show(); ExtDimSpins[0]->setValue(1.0); ExtDimSpins[0]->show(); NDimsExt++;
+    DimLabsExt[0]->setText("Radial factor"); DimLabsExt[0]->show(); ExtDimSpins[0]->setValue(8.0); ExtDimSpins[0]->show(); NDimsExt++;
 
     DiscLabs[0]->setText("Azimuthal");      DiscLabs[0]->show();    DiscSpins[0]->setValue(32); DiscSpins[0]->show();   NDisc++;
-    DiscLabs[1]->setText("Axial");          DiscLabs[1]->show();    DiscSpins[1]->setValue(16); DiscSpins[1]->show();  NDisc++;
-    DiscLabsAux[0]->setText("Radial");      DiscLabsAux[0]->show(); AuxDiscSpins[0]->setValue(16); AuxDiscSpins[0]->show();    NDiscAux++;
+    DiscLabs[1]->setText("Axial");          DiscLabs[1]->show();    DiscSpins[1]->setValue(32); DiscSpins[1]->show();  NDisc++;
+    DiscLabsAux[0]->setText("Radial");      DiscLabsAux[0]->show(); AuxDiscSpins[0]->setValue(32); AuxDiscSpins[0]->show();    NDiscAux++;
     DiscLabsExt[0]->setText("Azimuthal");   DiscLabsExt[0]->show(); ExtDiscSpins[0]->setValue(32); ExtDiscSpins[0]->show(); NDiscExt++;
-    DiscLabsExt[1]->setText("Axial");       DiscLabsExt[1]->show(); ExtDiscSpins[1]->setValue(16); ExtDiscSpins[1]->show(); NDiscExt++;
+    DiscLabsExt[1]->setText("Axial");       DiscLabsExt[1]->show(); ExtDiscSpins[1]->setValue(32); ExtDiscSpins[1]->show(); NDiscExt++;
 
     update();
 }
@@ -219,9 +189,12 @@ void Grid_Options::on_ButtonEllipsoid_clicked()
     DimLabs[1]->setText("Semiaxis b"); DimLabs[1]->show(); DimSpins[1]->setValue(1.0); DimSpins[1]->show(); NDims++;
     DimLabs[2]->setText("Semiaxis c"); DimLabs[2]->show(); DimSpins[2]->setValue(1.0); DimSpins[2]->show(); NDims++;
     DimLabs[3]->setText("Depth");      DimLabs[3]->show(); DimSpins[3]->setValue(0.0); DimSpins[3]->show(); NDims++;
+    DimLabsExt[0]->setText("Radius");  DimLabsExt[0]->show(); ExtDimSpins[0]->setValue(15.0); ExtDimSpins[0]->show(); NDimsExt++;
 
     DiscLabs[0]->setText("Azimuthal");      DiscLabs[0]->show();    DiscSpins[0]->setValue(16); DiscSpins[0]->show();   NDisc++;
-    DiscLabs[1]->setText("Axial");          DiscLabs[1]->show();    DiscSpins[1]->setValue(8); DiscSpins[1]->show();  NDisc++;
+    DiscLabs[1]->setText("Axial");          DiscLabs[1]->show();    DiscSpins[1]->setValue(16); DiscSpins[1]->show();  NDisc++;
+    DiscLabsExt[0]->setText("Azimuthal");   DiscLabsExt[0]->show(); ExtDiscSpins[0]->setValue(16); ExtDiscSpins[0]->show(); NDiscExt++;
+    DiscLabsExt[1]->setText("Axial");       DiscLabsExt[1]->show(); ExtDiscSpins[1]->setValue(16); ExtDiscSpins[1]->show(); NDiscExt++;
 
     update();
 }
@@ -252,21 +225,22 @@ void Grid_Options::on_ButtonBarge_clicked()
     // Barge type geometry
 
     GeoType = Barge;
+    // GeoType = NWT;
     Hide_Labels();
     Hide_Buttons();
     Darken_Button(ui->ButtonBarge);
 
-    DimLabs[NDims]->setText("Length"); DimLabs[NDims]->show(); DimSpins[NDims]->setValue(30.0); DimSpins[NDims]->show(); NDims++;
-    DimLabs[NDims]->setText("Width"); DimLabs[NDims]->show(); DimSpins[NDims]->setValue(20.0); DimSpins[NDims]->show(); NDims++;
-    DimLabs[NDims]->setText("Draft"); DimLabs[NDims]->show(); DimSpins[NDims]->setValue(10.0); DimSpins[NDims]->show(); NDims++;
-    DimLabsExt[NDimsExt]->setText("Length"); DimLabsExt[NDimsExt]->show(); ExtDimSpins[NDimsExt]->setValue(60.0); ExtDimSpins[NDimsExt]->show(); NDimsExt++;
-    DimLabsExt[NDimsExt]->setText("Width"); DimLabsExt[NDimsExt]->show(); ExtDimSpins[NDimsExt]->setValue(40.0); ExtDimSpins[NDimsExt]->show(); NDimsExt++;
+    DimLabs[NDims]->setText("Length"); DimLabs[NDims]->show(); DimSpins[NDims]->setValue(5.0); DimSpins[NDims]->show(); NDims++;
+    DimLabs[NDims]->setText("Width"); DimLabs[NDims]->show(); DimSpins[NDims]->setValue(2.0); DimSpins[NDims]->show(); NDims++;
+    DimLabs[NDims]->setText("Draft"); DimLabs[NDims]->show(); DimSpins[NDims]->setValue(2.0); DimSpins[NDims]->show(); NDims++;
+    DimLabsExt[NDimsExt]->setText("Length"); DimLabsExt[NDimsExt]->show(); ExtDimSpins[NDimsExt]->setValue(10.0); ExtDimSpins[NDimsExt]->show(); NDimsExt++;
+    DimLabsExt[NDimsExt]->setText("Width"); DimLabsExt[NDimsExt]->show(); ExtDimSpins[NDimsExt]->setValue(8.0); ExtDimSpins[NDimsExt]->show(); NDimsExt++;
 
-    DiscLabs[NDisc]->setText("X");      DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(12);  DiscSpins[NDisc]->show();  NDisc++;
-    DiscLabs[NDisc]->setText("Y");      DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(12);  DiscSpins[NDisc]->show();  NDisc++;
-    DiscLabs[NDisc]->setText("Z");      DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(12);  DiscSpins[NDisc]->show();  NDisc++;
-    DiscLabsExt[NDiscExt]->setText("X");      DiscLabsExt[NDiscExt]->show(); ExtDiscSpins[NDiscExt]->setValue(32); ExtDiscSpins[NDiscExt]->show();  NDiscExt++;
-    DiscLabsExt[NDiscExt]->setText("Y");      DiscLabsExt[NDiscExt]->show(); ExtDiscSpins[NDiscExt]->setValue(32); ExtDiscSpins[NDiscExt]->show();  NDiscExt++;
+    DiscLabs[NDisc]->setText("X");          DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(16);  DiscSpins[NDisc]->show();  NDisc++;
+    DiscLabs[NDisc]->setText("Y");          DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(8);  DiscSpins[NDisc]->show();  NDisc++;
+    DiscLabs[NDisc]->setText("Z");          DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(8);  DiscSpins[NDisc]->show();  NDisc++;
+    DiscLabsExt[NDiscExt]->setText("X");    DiscLabsExt[NDiscExt]->show(); ExtDiscSpins[NDiscExt]->setValue(12); ExtDiscSpins[NDiscExt]->show();  NDiscExt++;
+    DiscLabsExt[NDiscExt]->setText("Y");    DiscLabsExt[NDiscExt]->show(); ExtDiscSpins[NDiscExt]->setValue(12); ExtDiscSpins[NDiscExt]->show();  NDiscExt++;
 
     update();
 }
@@ -378,12 +352,186 @@ void Grid_Options::on_ButtonWigley_clicked()
     Hide_Buttons();
     Darken_Button(ui->ButtonWigley);
 
-    DimLabs[NDims]->setText("Length");  DimLabs[NDims]->show(); DimSpins[NDims]->setValue(50.0); DimSpins[NDims]->show(); NDims++;
-    DimLabs[NDims]->setText("Width");   DimLabs[NDims]->show(); DimSpins[NDims]->setValue(10.0); DimSpins[NDims]->show(); NDims++;
-    DimLabs[NDims]->setText("Depth");   DimLabs[NDims]->show(); DimSpins[NDims]->setValue(10.0); DimSpins[NDims]->show(); NDims++;
+    DimLabs[NDims]->setText("Length");  DimLabs[NDims]->show(); DimSpins[NDims]->setValue(5.0); DimSpins[NDims]->show(); NDims++;
+    DimLabs[NDims]->setText("Width");   DimLabs[NDims]->show(); DimSpins[NDims]->setValue(1.0); DimSpins[NDims]->show(); NDims++;
+    DimLabs[NDims]->setText("Depth");   DimLabs[NDims]->show(); DimSpins[NDims]->setValue(1.0); DimSpins[NDims]->show(); NDims++;
 
-    DiscLabs[NDisc]->setText("X");      DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(64);  DiscSpins[NDisc]->show();  NDisc++;
+    DiscLabs[NDisc]->setText("X");      DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(16);  DiscSpins[NDisc]->show();  NDisc++;
     DiscLabs[NDisc]->setText("Z");      DiscLabs[NDisc]->show();    DiscSpins[NDisc]->setValue(16);  DiscSpins[NDisc]->show();  NDisc++;
 
     update();
 }
+
+//--- Generate geometries
+
+void Grid_Options::Generate_Ellipsoid()
+{
+    // Submerged Ellipsoid is generated
+    Boundary = new BEMUse::Ellipsoid();
+
+    Parameters.push_back(BEMUse::Parameter("Semiaxis_a",Real(DimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("Semiaxis_b",Real(DimSpins[1]->value())));
+    Parameters.push_back(BEMUse::Parameter("Semiaxis_c",Real(DimSpins[2]->value())));
+    Parameters.push_back(BEMUse::Parameter("Ellipsoid_Depth",Real(DimSpins[3]->value())));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Axial",DiscSpins[1]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Azimuthal",DiscSpins[0]->value()));
+    if (ui->CosineDist->isChecked())        Parameters.push_back(BEMUse::Parameter("Cosine_Disc",true));
+    else                                    Parameters.push_back(BEMUse::Parameter("Cosine_Disc",false));
+    // Parameters.push_back(BEMUse::Parameter("Triangular_Panels",true));  // Flag generates triangular panels
+}
+
+void Grid_Options::Generate_SemiEllipsoid()
+{
+    // Submerged Ellipsoid is generated
+    Boundary = new BEMUse::Semi_Ellipsoid();
+
+    // Parameters
+    Parameters.push_back(BEMUse::Parameter("Semiaxis_a",Real(DimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("Semiaxis_b",Real(DimSpins[1]->value())));
+    Parameters.push_back(BEMUse::Parameter("Semiaxis_c",Real(DimSpins[2]->value())));
+    Parameters.push_back(BEMUse::Parameter("FreeSurface_Radius",Real(ExtDimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Axial",DiscSpins[1]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Azimuthal",DiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Radial",ExtDiscSpins[1]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Int_Radial",AuxDiscSpins[0]->value()));
+    if (ui->CosineDist->isChecked())        Parameters.push_back(BEMUse::Parameter("Cosine_Disc",true));
+    else                                    Parameters.push_back(BEMUse::Parameter("Cosine_Disc",false));
+    // Parameters.push_back(BEMUse::Parameter("Triangular_Panels",true)); // Flag generates triangular panels
+    Parameters.push_back(BEMUse::Parameter("Triangular_Panels",true)); // Flag generates triangular panels
+}
+
+void Grid_Options::Generate_Cylinder()
+{
+    Boundary = new BEMUse::Half_Cylinder();
+
+    // Parameters
+    Parameters.push_back(BEMUse::Parameter("Radius", Real(DimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("Draft", Real(DimSpins[1]->value())));
+    Parameters.push_back(BEMUse::Parameter("FreeSurface_Radius",Real(ExtDimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Azimuthal",DiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Radial",DiscSpins[1]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Vertical",DiscSpins[2]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Radial",ExtDiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Int_Radial",AuxDiscSpins[0]->value()));
+    if (ui->CosineDist->isChecked())        Parameters.push_back(BEMUse::Parameter("Cosine_Disc",true));
+    else                                    Parameters.push_back(BEMUse::Parameter("Cosine_Disc",false));
+}
+
+void Grid_Options::Generate_Barge()
+{
+    Boundary = new BEMUse::Barge();
+
+    // Parameters
+    Parameters.push_back(BEMUse::Parameter("Tank_Length", Real(DimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("Tank_Width", Real(DimSpins[1]->value())));
+    Parameters.push_back(BEMUse::Parameter("Tank_Depth",Real(DimSpins[2]->value())));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Tank_Length",DiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Tank_Width",DiscSpins[1]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Tank_Depth",DiscSpins[2]->value()));
+    Parameters.push_back(BEMUse::Parameter("FreeSurface_Length",Real(ExtDimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("FreeSurface_Width",Real(ExtDimSpins[1]->value())));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Length",ExtDiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Width",ExtDiscSpins[1]->value()));
+    if (ui->CosineDist->isChecked())        Parameters.push_back(BEMUse::Parameter("Cosine_Disc",true));
+    else                                    Parameters.push_back(BEMUse::Parameter("Cosine_Disc",false));
+}
+
+void Grid_Options::Generate_SparBuoy()
+{
+    Boundary = new BEMUse::Tapered_SparBuoy();
+
+    // Parameters
+    Parameters.push_back(BEMUse::Parameter("Lower_Radius", Real(DimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("Upper_Radius", Real(DimSpins[1]->value())));
+    Parameters.push_back(BEMUse::Parameter("Draft", Real(DimSpins[2]->value())));
+    Parameters.push_back(BEMUse::Parameter("Height_Taper_Begin", Real(DimSpins[3]->value())));
+    Parameters.push_back(BEMUse::Parameter("Height_Taper_End", Real(DimSpins[4]->value())));
+    Parameters.push_back(BEMUse::Parameter("FreeSurface_Radius", Real(ExtDimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Radial", DiscSpins[1]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Vertical_Section1", DiscSpins[2]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Vertical_Section2", DiscSpins[3]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Vertical_Section3", DiscSpins[4]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Azimuthal", DiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Radial", ExtDiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Int_Radial", AuxDiscSpins[0]->value()));
+    if (ui->CosineDist->isChecked())        Parameters.push_back(BEMUse::Parameter("Cosine_Disc",true));
+    else                                    Parameters.push_back(BEMUse::Parameter("Cosine_Disc",false));
+}
+
+void Grid_Options::Generate_TripleSpar()
+{
+    Boundary = new BEMUse::Triple_Spar();
+
+    // Parameters
+    Parameters.push_back(BEMUse::Parameter("Radius", Real(DimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("Draft", Real(DimSpins[1]->value())));
+    Parameters.push_back(BEMUse::Parameter("Spar_Radius", Real(DimSpins[2]->value())));
+    Parameters.push_back(BEMUse::Parameter("FreeSurface_Radius",Real(ExtDimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Azimuthal",DiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Radial",DiscSpins[1]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Vertical",DiscSpins[2]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Radial",ExtDiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Int_Radial",AuxDiscSpins[0]->value()));
+    if (ui->CosineDist->isChecked())        Parameters.push_back(BEMUse::Parameter("Cosine_Disc",true));
+    else                                    Parameters.push_back(BEMUse::Parameter("Cosine_Disc",false));
+    Parameters.push_back(BEMUse::Parameter("Shift_Over_Leg",CheckBoxes[0]->isChecked()));
+}
+
+void Grid_Options::Generate_OC3SparBuoy()
+{
+    Boundary = new BEMUse::OC3_SparBuoy();
+
+    // Parameters
+    Parameters.push_back(BEMUse::Parameter("Scaling_Factor", Real(DimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("FreeSurface_Radius", Real(ExtDimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Radial", DiscSpins[1]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Vertical_Section1", DiscSpins[2]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Vertical_Section2", DiscSpins[3]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Vertical_Section3", DiscSpins[4]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Azimuthal", DiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Radial", ExtDiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Int_Radial", AuxDiscSpins[0]->value()));
+    if (ui->CosineDist->isChecked())        Parameters.push_back(BEMUse::Parameter("Cosine_Disc",true));
+    else                                    Parameters.push_back(BEMUse::Parameter("Cosine_Disc",false));
+    Parameters.push_back(BEMUse::Parameter("Triangular_Panels", false));
+}
+
+void Grid_Options::Generate_OC4TripleSpar()
+{
+    Boundary = new BEMUse::SemiSub_OC4();
+
+    // Parameters
+
+    // Spar Leg
+    Parameters.push_back(BEMUse::Parameter("Scaling_Factor",Real(DimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Azimuthal",DiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Radial_Base",DiscSpins[1]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Vertical_HeavePlate",DiscSpins[2]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Horizontal_HeavePlate",DiscSpins[3]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Vertical",DiscSpins[4]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Int_Radial",AuxDiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_FreeSurface_Radial",DiscSpins[1]->value()));
+    Parameters.push_back(BEMUse::Parameter("FreeSurface_Radius",Real(ExtDimSpins[0]->value())));
+
+    // Central column
+    Parameters.push_back(BEMUse::Parameter("NPanels_Radial",DiscSpins[1]->value()));
+
+    if (ui->CosineDist->isChecked())        Parameters.push_back(BEMUse::Parameter("Cosine_Disc",true));
+    else                                    Parameters.push_back(BEMUse::Parameter("Cosine_Disc",false));
+    Parameters.push_back(BEMUse::Parameter("Triangular_Panels",false)); // Generate quadratic elements for this config
+    Parameters.push_back(BEMUse::Parameter("Shift_Over_Leg",CheckBoxes[0]->isChecked())); // Generate quadratic elements for this config
+}
+
+void Grid_Options::Generate_WigleyHull()
+{
+    Boundary = new BEMUse::Wigley_Hull();
+
+    Parameters.push_back(BEMUse::Parameter("Length", Real(DimSpins[0]->value())));
+    Parameters.push_back(BEMUse::Parameter("Beam",  Real(DimSpins[1]->value())));
+    Parameters.push_back(BEMUse::Parameter("Draft", Real(DimSpins[2]->value())));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Length",DiscSpins[0]->value()));
+    Parameters.push_back(BEMUse::Parameter("NPanels_Depth",DiscSpins[1]->value()));
+    if (ui->CosineDist->isChecked())        Parameters.push_back(BEMUse::Parameter("Cosine_Disc",true));
+    else                                    Parameters.push_back(BEMUse::Parameter("Cosine_Disc",false));
+}
+

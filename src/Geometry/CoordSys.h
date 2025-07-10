@@ -93,6 +93,25 @@ public:
         return M;
     }
 
+    void Set_Local_Orientation(Vector3 &nX, Vector3 &nY, Vector3 &nZ)
+    {
+        Matrix3 M;
+        M.col(0) = nX;
+        M.col(1) = nY;
+        M.col(2) = nZ;
+        O = Quat(M);
+    }
+
+    void Rotate_Centroid_about_z(Real &th){
+        // Small helper function for slightly rotating
+        Vector3 x = X_Axis();
+        Vector3 y = Y_Axis();
+        Vector3 xn =  cos(th)*x + sin(th)*y;
+        Vector3 yn = -sin(th)*x + cos(th)*y;
+        Vector3 zn = xn.cross(yn);
+        Set_Local_Orientation(xn,yn,zn);
+    }
+
     Vector3 X_Axis()            {return O*UnitX;}
     Vector3 Y_Axis()            {return O*UnitY;}
     Vector3 Z_Axis()            {return O*UnitZ;}

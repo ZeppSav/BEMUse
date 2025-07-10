@@ -9,6 +9,27 @@ namespace BEMUse
 
 //--- Geometry functions
 
+void Barge::Set_Parameters(std::vector<Parameter> &Params)
+{
+    // This sets the parameters for the geometry and simulation
+    StdAppend(Parameters, Params);
+    for (Parameter P : Parameters)
+    {
+        if (P.myNameis("Tank_Length"))                  L = P.Get_Param<Real>();
+        if (P.myNameis("Tank_Width"))                   W = P.Get_Param<Real>();
+        if (P.myNameis("Tank_Depth"))                   D = P.Get_Param<Real>();
+        if (P.myNameis("FreeSurface_Length"))           LFS = P.Get_Param<Real>();
+        if (P.myNameis("FreeSurface_Width"))            WFS = P.Get_Param<Real>();
+        if (P.myNameis("NPanels_Tank_Length"))          NX = P.Get_Param<int>();
+        if (P.myNameis("NPanels_Tank_Width"))           NY = P.Get_Param<int>();
+        if (P.myNameis("NPanels_Tank_Depth"))           NZ = P.Get_Param<int>();
+        if (P.myNameis("NPanels_FreeSurface_Length"))   NXFS = P.Get_Param<int>();
+        if (P.myNameis("NPanels_FreeSurface_Width"))    NYFS = P.Get_Param<int>();
+        if (P.myNameis("Cosine_Disc"))                  Cosine = P.Get_Param<bool>();
+        if (P.myNameis("Triangular_Panels"))            TriPanels = P.Get_Param<bool>();
+    }
+}
+
 void Barge::Generate_Nodes()
 {
     // For simplicity I do this over 5 faces. These are then discarded in the element creation module to avoid issues upon deletion.
@@ -101,7 +122,7 @@ void Barge::Generate_Aux_Nodes()
     for (int i=0; i<Aux_Nodes.size(); i++) Aux_Nodes[i]->ID = i;
 }
 
-void Barge::Generate_Ext_Nodes()
+void Barge::Generate_FreeSurface_Nodes()
 {
     Real x, y;
     // For simplicity I will simply generate a single square grid, and later I will remove the unnecessary elements
@@ -111,11 +132,11 @@ void Barge::Generate_Ext_Nodes()
             y = -0.5*WFS + WFS*j/NYFS;      // Only linear here!
             // As a trick to extend the nodes SLIGHTLY away from the boundary I will dilate them here
             Vector3 P(1.001*x,1.001*y,0);
-            Ext_Nodes.push_back(std::make_shared<Node>(Inertial_CS,P));
+            FreeSurface_Nodes.push_back(std::make_shared<Node>(Inertial_CS,P));
         }
     }
 
-    for (int i=0; i<Ext_Nodes.size(); i++) Ext_Nodes[i]->ID = i;
+    for (int i=0; i<FreeSurface_Nodes.size(); i++) FreeSurface_Nodes[i]->ID = i;
 }
 
 void Barge::Generate_Elements()
@@ -182,29 +203,31 @@ void Barge::Generate_Aux_Elements()
     }
 }
 
-void Barge::Generate_Ext_Elements()
+void Barge::Generate_FreeSurface_Elements()
 {
     // Create elements, everywhere except WITHIN the interior free surface
 
     std::vector<bool> Applied;
-    Applied.assign(Ext_Nodes.size(),false);
+    Applied.assign(FreeSurface_Nodes.size(),false);
 
     Real XL = -0.5*L, XR = 0.5*L;
     Real YL = -0.5*W, YR = 0.5*W;
 
     for (int i=0; i<NXFS; i++){
         for (int j=0; j<NYFS; j++){
-            SP_Node N1 = Ext_Nodes[i*(NYFS+1)+j];           Vector3 P1 = N1->Position_Global();
-            SP_Node N2 = Ext_Nodes[(i+1)*(NYFS+1)+j];       Vector3 P2 = N2->Position_Global();
-            SP_Node N3 = Ext_Nodes[(i+1)*(NYFS+1)+j+1];     Vector3 P3 = N3->Position_Global();
-            SP_Node N4 = Ext_Nodes[i*(NYFS+1)+j+1];         Vector3 P4 = N4->Position_Global();
+            SP_Node N1 = FreeSurface_Nodes[i*(NYFS+1)+j];           Vector3 P1 = N1->Position_Global();
+            SP_Node N2 = FreeSurface_Nodes[(i+1)*(NYFS+1)+j];       Vector3 P2 = N2->Position_Global();
+            SP_Node N3 = FreeSurface_Nodes[(i+1)*(NYFS+1)+j+1];     Vector3 P3 = N3->Position_Global();
+            SP_Node N4 = FreeSurface_Nodes[i*(NYFS+1)+j+1];         Vector3 P4 = N4->Position_Global();
 
-            Vector3 PMid = 0.25*(P1+P2+P3+P4);
-            bool InX = (fabs(PMid(0))<0.5*L);
-            bool InY = (fabs(PMid(1))<0.5*W);
+            // Vector3 PMid = 0.25*(P1+P2+P3+P4);
+            // bool InX = (fabs(PMid(0))<0.5*L);
+            // bool InY = (fabs(PMid(1))<0.5*W);
+            bool InX = (fabs(P1(0))<0.5*L)||(fabs(P2(0))<0.5*L)||(fabs(P3(0))<0.5*L)||(fabs(P4(0))<0.5*L);
+            bool InY = (fabs(P1(1))<0.5*W)||(fabs(P2(1))<0.5*W)||(fabs(P3(1))<0.5*W)||(fabs(P4(1))<0.5*W);
             if (InX&&InY) continue;             // Do not include panels over the interior free surface
 
-            Ext_Elements.push_back(std::make_shared<Quad_Element>(N1,N2,N3,N4));
+            FreeSurface_Elements.push_back(std::make_shared<Quad_Element>(N1,N2,N3,N4));
 
             // Set these nodes to be active
             Applied[N1->ID] = true;
@@ -217,12 +240,12 @@ void Barge::Generate_Ext_Elements()
 
     // Create surrogate list to store additional values
     std::vector<SP_Node> Surr_Nodes;
-    for (int i=0; i<Ext_Nodes.size(); i++) if (Applied[i]) Surr_Nodes.push_back(Ext_Nodes[i]);
+    for (int i=0; i<FreeSurface_Nodes.size(); i++) if (Applied[i]) Surr_Nodes.push_back(FreeSurface_Nodes[i]);
 
     // Now replace array (& reset node id)
-    Ext_Nodes.clear();
-    StdAppend(Ext_Nodes,Surr_Nodes);
-    for (int i=0; i<Ext_Nodes.size(); i++) Ext_Nodes[i]->ID = i;
+    FreeSurface_Nodes.clear();
+    StdAppend(FreeSurface_Nodes,Surr_Nodes);
+    for (int i=0; i<FreeSurface_Nodes.size(); i++) FreeSurface_Nodes[i]->ID = i;
 }
 
 }
