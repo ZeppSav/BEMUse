@@ -27,6 +27,8 @@
 
 #include "../Boundary/Boundary_Base.h"
 #include "../Geometry/Panel.h"
+// #include "Surface.h"
+
 #include <Eigen/IterativeLinearSolvers>
 #include <unsupported/Eigen/IterativeSolvers>
 //#include "Eigen/unsupported/Eigen/src/IterativeSolvers/DGMRES.h"    //Note: Had to change path in Eigen folder to Eigen/Eigen/Eigenvalues
@@ -46,8 +48,17 @@ protected:
     int NPA=0, NPAux=0, NPTot=0;              // Panel counts
     int NA=0, NB=0, NR=0, NAux=0, NATot=0;
 
+    //--- Solver variables ( these are updated at every timestep)
+    Matrix G;                       // Matrices of influence coefficients
+    Matrix H;                       // Matrices of influence coefficients
+    Matrix X;                       // Solution vector
+    Matrix BC;                      // Known BC for solution of linear system
+    Matrix S;                       // panel strength
+    Matrix HInv;                    // Inverse H matrix
+
     //--- Linear system direct solver objects
     Eigen::PartialPivLU<CMatrix> PPLU;
+    Eigen::PartialPivLU<Matrix> rPPLU;
 
     //--- Linear system iterative solver objects
 //    Eigen::ConjugateGradient<CMatrix, Eigen::Lower|Eigen::Upper, Eigen::IdentityPreconditioner> CG;
@@ -89,8 +100,13 @@ public:
     //--- Setup
     virtual void Setup(Boundary *B)                 {}
 
+    //--- Boundary conditions
+    virtual void Set_BC(Matrix &BCin)           {BC  = BCin;}
+    virtual void Set_External_BC(std::vector<Vector3> &Vels)    {}  // Ambient flow specified outside
+
     //--- Solution
     virtual void Solve()                            {}
+    virtual void Solve_Steady()                     {}
     virtual void Solve(Boundary *B)                 {}
 
     //--- Post processing

@@ -35,10 +35,10 @@ class Aerodynamic_Solver : public Solver
 protected:
 
     //--- Linear system arrays
-    CMatrix SMat;    // Influence coefficient matrix (source terms)
-    CMatrix DMat;    // Influence coefficient matrix (source terms)
-    CMatrix RHSMat;  // RHS vector which contains the Boundary condition to be solved for
-    CMatrix SolMat;  // Solution vector
+    // CMatrix SMat;    // Influence coefficient matrix (source terms)
+    // CMatrix DMat;    // Influence coefficient matrix (source terms)
+    // CMatrix RHSMat;  // RHS vector which contains the Boundary condition to be solved for
+    // CMatrix SolMat;  // Solution vector
 
     //--- Problem Setup
     void Create_Panels(Boundary *B);
@@ -53,11 +53,20 @@ public:
     //--- Constructor
     Aerodynamic_Solver() {}
 
+    //--- Solver parameter specification
+    // virtual void Set_Ints(std::vector<int> &D)          {}
+    // virtual void Set_Real(Real D)                       {}
+    // virtual void Set_Reals(std::vector<Real> &D)        {}
+    void Set_Flags(std::vector<bool> &D);
+
     //--- Setup
     void Setup(Boundary *B);
 
+    //--- Boundary conditions
+    void Set_External_BC(std::vector<Vector3> &Vels)  override; // Ambient flow specified outside
+
     //--- Solution
-    void Solve();
+    void Solve_Steady();
 
     //--- Post processing
     void Post_Processing(Boundary *B)       {}

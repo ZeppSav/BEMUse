@@ -7,6 +7,16 @@
 namespace BEMUse
 {
 
+//--- Solver parameter specification
+
+void Aerodynamic_Solver::Set_Flags(std::vector<bool> &D)
+{
+    // isBody = D[0];
+    // isWall = D[1];
+    // isSeaBed = D[2];
+    // isFreeSurface = D[3];
+}
+
 //--- Problem Setup
 void Aerodynamic_Solver::Create_Panels(Boundary *B)
 {
@@ -37,20 +47,19 @@ void Aerodynamic_Solver::Create_Panels(Boundary *B)
 
 void Aerodynamic_Solver::Prepare_Linear_System()
 {
-    // Prepare the linear system
+    // Prepare the linear system (assume for now constant panel strengths)
 
-    SMat = CMatrix::Zero(NPTot,NPTot);
-    DMat = CMatrix::Zero(NPTot,NPTot);
+    G = Matrix::Zero(NPTot,NPTot);
+    H = Matrix::Zero(NPTot,NPTot);
 
     OpenMPfor
     for (int S=0; S<NPTot; S++){
         for (int R=0; R<NPTot; R++){
-            Real s, d;
-            Panels[S]->Inf_SingleDoubleLayer(BC_Pos[R],s, d);
-            SMat(R,S) = CReal(s,0.0);
-            DMat(R,S) = CReal(d,0.0);
+            Panels[S]->Inf_SingleDoubleLayer(BC_Pos[R],G(R,S),H(R,S));
         }
     }
+
+    rPPLU.compute(H);
 }
 
 //--- Setup
@@ -66,35 +75,51 @@ void Aerodynamic_Solver::Setup(Boundary *B)
 //    GMRES.setTolerance(1.0e-10);
 }
 
-//--- Solution
-void Aerodynamic_Solver::Solve()
-{
-    //--- This carries out the solve for the current BC
+//--- Boundary conditions
 
-    //--- Set BC
-    RHSMat = CMatrix::Zero(NPTot,1);
+void Aerodynamic_Solver::Set_External_BC(std::vector<Vector3> &Vels)
+{
+    // This specifies the boundary condition vector in the case that the velocity field is specified from an outisde source.
+
+    OpenMPfor
     for (int i=0; i<NPTot; i++){
-        Vector3 P = Panel_Nodes[i]->Position_Global();
-        Vector3 N = Panel_Nodes[i]->Z_Axis_Global();
-        Vector3 PCN = P.cross(N);
-//        RHSMat(i) = CReal(N(2),0.0);        // Translation
-        RHSMat(i) = CReal(PCN(0),0.0);      // Rotation
+        Vector3 Z = Panels[i]->Get_Geo()->Centroid->Z_Axis_Global();
+        BC(i) = Vels[i].dot(Z);
     }
+}
+
+//--- Solution
+void Aerodynamic_Solver::Solve_Steady()
+{
+    //--- This carries out the solve for the previously specified BC.
+
+    S = G*BC;               // Specify source strength
+    X = rPPLU.solve(S);     // Specify perturbation potential
+
+//     //--- Set BC
+//     RHSMat = CMatrix::Zero(NPTot,1);
+//     for (int i=0; i<NPTot; i++){
+//         Vector3 P = Panel_Nodes[i]->Position_Global();
+//         Vector3 N = Panel_Nodes[i]->Z_Axis_Global();
+//         Vector3 PCN = P.cross(N);
+// //        RHSMat(i) = CReal(N(2),0.0);        // Translation
+//         RHSMat(i) = CReal(PCN(0),0.0);      // Rotation
+//     }
 
     //--- Calc solution
-    CMatrix RHSTemp = SMat*RHSMat;
+    // CMatrix RHSTemp = SMat*RHSMat;
 
-    // Prepare linear system
-//    PPLU.compute(DMat);                     // Prepare linear solver for solution
-    GMRES.compute(DMat);
+//     // Prepare linear system
+// //    PPLU.compute(DMat);                     // Prepare linear solver for solution
+//     GMRES.compute(DMat);
 
-    // Solve
-//    CMatrix Phi_J = PPLU.solve(RHSTemp);                       // Solution using a partial piv Lu decomposition
-    CMatrix Phi_J = GMRES.solve(RHSTemp);
-//    VisMat = DMat;
-    std::cout << "GMRES: #iterations: " << GMRES.iterations() << ", estimated error: " << GMRES.error() << std::endl;
+//     // Solve
+// //    CMatrix Phi_J = PPLU.solve(RHSTemp);                       // Solution using a partial piv Lu decomposition
+//     CMatrix Phi_J = GMRES.solve(RHSTemp);
+// //    VisMat = DMat;
+//     std::cout << "GMRES: #iterations: " << GMRES.iterations() << ", estimated error: " << GMRES.error() << std::endl;
 
-    RadSolArray.push_back(Phi_J);
+//     RadSolArray.push_back(Phi_J);
 }
 
 }

@@ -95,24 +95,38 @@ HEADERS  += \
     src/Solver/Hydrodynamic_Solver.h \
     src/Solver/Surface.h
 
-#-------------------
-# GUI configuration
-#-------------------
+# #-------------------
+# # GUI configuration
+# #-------------------
 
-DEFINES += BEMUse_GUI   # Compile the GUI
-QT       += gui opengl widgets openglwidgets
+# DEFINES += BEMUse_GUI   # Compile the GUI
+# QT       += gui opengl widgets openglwidgets
 
-LIBS += -lOpengl32      # include openGL library for visualisation
+# LIBS += -lOpengl32      # include openGL library for visualisation
 
-SOURCES += src_gui/BEMUser_Interface.cpp \
-    src_gui/Grid_Options.cpp \
-    src_gui/Solver_Setup.cpp \
+# SOURCES += src_gui/BEMUser_Interface.cpp \
+#     src_gui/Grid_Options.cpp \
+#     src_gui/Solver_Setup.cpp \
 
-HEADERS  += src_gui/BEMUser_Interface.h \
-    src_gui/Grid_Options.h \
-    src_gui/Solver_Setup.h \
-    src_gui/Visualise.h \
+# HEADERS  += src_gui/BEMUser_Interface.h \
+#     src_gui/Grid_Options.h \
+#     src_gui/Solver_Setup.h \
+#     src_gui/Visualise.h \
 
-FORMS    += src_gui/bemuser_interface.ui \
-    src_gui/grid_options.ui \
-    src_gui/solver_setup.ui
+# FORMS    += src_gui/bemuser_interface.ui \
+#     src_gui/grid_options.ui \
+#     src_gui/solver_setup.ui
+
+# #----------------------
+# # Console configuration
+# #----------------------
+
+# DEFINES += BEMUse_Console
+
+#-----------------------
+# Testing configuration
+#-----------------------
+
+DEFINES += BEMUse_Testing
+
+HEADERS  += src/BEMUse_Test.h \

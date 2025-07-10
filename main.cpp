@@ -36,9 +36,11 @@ int main(int argc, char *argv[])
     return a.exec();
 }
 
-#else
+#endif
 
 //----------- BEMUse: Compilation of Command-line version with CMake ------------
+
+#ifdef BEMUse_Console
 
 #include "src/BEMUse_Inquiry.h"
 #include "src/BEMUser_Console.h"
@@ -47,13 +49,38 @@ int main(int argc, char *argv[])
 {
     // Step 1: Is this simply an inquiry for information? If so, avoid following steps.
     if (BEMUse_Enquiry(argc,argv)) return 0;
-
     // Step 2: This is not an enquiry... proceed with analysis.
     BEMUse_Console C;
     C.Specify_Compute_Params(argc,argv);
     C.Specify_Geometry(argc,argv);
     C.Specify_Solver(argc,argv);
     C.Execute();
+}
+
+#endif
+
+//----------- BEMUse: Compilation of Command-line version with CMake ------------
+
+#ifdef BEMUse_Testing
+
+#include "src/BEMUse_Test.h"
+
+int main(int argc, char *argv[])
+{
+    // Generate list of input parameters
+
+    // Test 1: Ellipsoid:
+    std::vector<BEMUse::Parameter> P;
+    P.push_back(BEMUse::Parameter("Semiaxis_a",Real(2.0)));
+    P.push_back(BEMUse::Parameter("Semiaxis_b",Real(1.0)));
+    P.push_back(BEMUse::Parameter("Semiaxis_c",Real(0.5)));
+    P.push_back(BEMUse::Parameter("NPanels_Axial",64));
+    P.push_back(BEMUse::Parameter("NPanels_Azimuthal",64));
+    P.push_back(BEMUse::Parameter("Cosine_Disc",true));
+    P.push_back(BEMUse::Parameter("Uinf_x",Real(1.0)));
+    P.push_back(BEMUse::Parameter("Triangular_Panels",true));
+    BEMUse_Test *Test1 = new Ellipsoid_Test(P); Test1->Execute_Test();
+
 }
 
 #endif
