@@ -24,25 +24,25 @@ void Aerodynamic_Solver::Create_Panels(Boundary *B)
     std::vector<SP_Geo> Geo;
     B->Get_Elements(Geo);
 
+    // Generate surface representation
+    std::vector<SP_Geo> BodyGeo;
+    std::vector<SP_Node> BodyNodes;
+    B->Get_Elements(BodyGeo);
+    B->Get_Nodes(BodyNodes);
+    BodySurface = new Surface(BodyGeo,BodyNodes);
+    BodySurface->Set_Name("Body");
+    BodySurface->Get_Panels(Body_Panels);
+
     NPA = Geo.size();
     for (int i=0; i<NPA; i++){
         if (Geo[i]->Get_N()==3)     Panels.push_back(std::make_shared<FlatSourceTriPanel>(Geo[i]));
         if (Geo[i]->Get_N()==4)     Panels.push_back(std::make_shared<FlatSourceQuadPanel>(Geo[i]));
     }
 
-    std::vector<SP_Geo> Geo_Aux;
-    B->Get_Aux_Elements(Geo_Aux);
-    NPAux = Geo_Aux.size();
-    for (int i=0; i<NPAux; i++){
-        if (Geo[i]->Get_N()==3)     Panels.push_back(std::make_shared<FlatSourceTriPanel>(Geo_Aux[i]));
-        if (Geo[i]->Get_N()==4)     Panels.push_back(std::make_shared<FlatSourceQuadPanel>(Geo_Aux[i]));
-    }
-
     NPTot = NPA + NPAux;
 
     // Now specify panel nodes (for BC later)
     for (SP_Panel P : Panels)   Panel_Nodes.push_back(P->Get_Geo()->Centroid);
-
 }
 
 void Aerodynamic_Solver::Prepare_Linear_System()
@@ -80,7 +80,6 @@ void Aerodynamic_Solver::Setup(Boundary *B)
 void Aerodynamic_Solver::Set_External_BC(std::vector<Vector3> &Vels)
 {
     // This specifies the boundary condition vector in the case that the velocity field is specified from an outisde source.
-
     OpenMPfor
     for (int i=0; i<NPTot; i++){
         Vector3 Z = Panels[i]->Get_Geo()->Centroid->Z_Axis_Global();

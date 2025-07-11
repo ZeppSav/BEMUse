@@ -91,7 +91,7 @@ public:
         Solver->Setup(Geometry);
 
         // // Extract out surfaces and BC nodes
-        // Solver->Get_Surfaces(BodySurface, WallSurface, SeaBedSurface, FreeSurface);
+        Solver->Get_Surfaces(BodySurface, WallSurface, SeaBedSurface, FreeSurface);
         // if (BodySurface)    BodySurface->Get_Nodes(BDNodes);
         // if (WallSurface)    WallSurface->Get_Nodes(WNodes);
         // if (SeaBedSurface)  SeaBedSurface->Get_Nodes(SBNodes);
@@ -102,9 +102,9 @@ public:
         // Execute
         Calculate();
 
-        // // Clean up
-        // if (Solver)     delete Solver;
-        // if (Geometry)   delete Geometry;
+        // Clean up
+        if (Solver)     delete Solver;
+        if (Geometry)   delete Geometry;
     }
 
     virtual void Calculate()                {}
@@ -136,19 +136,27 @@ public:
     {
         // In this test case, the boundary solution of the Ellipsoid is validated
         // for the case that the ambient inflow is along the three principle axes
-        NBNodes = size(BC_Nodes);
-        // BC_vector = Matrix(NBNodes,1);
-        // for (int n=0; n<NBNodes; n++)    BC_vector(n) = Uinf.dot(BC_Nodes[n]->Z_Axis_Global());
+
+        // Extract positions where boundary conditions are evaluated
+        std::vector<Vector3> BCPos;
+        Solver->Extract_BC_Pos(BCPos);
+        NBNodes = size(BCPos);
+
+        // Set Boundary conditions
         std::vector<Vector3> BCArray(NBNodes,Uinf);     // Generate array for constant windspeed
-
-
-        // Solve for this BC
         Solver->Set_External_BC(BCArray);
+
+        // Solve system
         Solver->Solve_Steady();
+        std::cout << "Solved" << std::endl;
         // Solver->Get_Solution(Sol_vector);
 
+        if (BodySurface)    BodySurface->Export_VTP();
+
+        std::cout << "Exported" << std::endl;
+
         // Output solution
-        Output_Results();
+        // Output_Results();
     }
 
     void Output_Results() override

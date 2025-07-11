@@ -44,7 +44,7 @@ protected:
     //--- Solver vars
     std::vector<SP_Panel>   Panels, Panels_Aux;
     std::vector<SP_Node>    Panel_Nodes;
-    StateVector             BC_Pos;
+    std::vector<Vector3>    BC_Pos;
     int NPA=0, NPAux=0, NPTot=0;              // Panel counts
     int NA=0, NB=0, NR=0, NAux=0, NATot=0;
 
@@ -103,6 +103,7 @@ public:
     //--- Boundary conditions
     virtual void Set_BC(Matrix &BCin)           {BC  = BCin;}
     virtual void Set_External_BC(std::vector<Vector3> &Vels)    {}  // Ambient flow specified outside
+    virtual void Extract_BC_Pos(std::vector<Vector3> &Pos)      {StdAppend(Pos,BC_Pos);}
 
     //--- Solution
     virtual void Solve()                            {}

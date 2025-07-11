@@ -14,15 +14,26 @@ Surface::Surface(std::vector<SP_Geo> &SurfPans, std::vector<SP_Node> &SurfNodes)
     // Constructor to define the surface
 
     // Generate panels
-    for (int i=0; i<size(SurfPans); i++) Panels.push_back(std::make_shared<FlatSourceTriPanel>(SurfPans[i]));
-    NP = size(Panels);
+    for (SP_Geo G : SurfPans){
+        if (G->Get_Type()==TRI)  Panels.push_back(std::make_shared<FlatSourceTriPanel>(G));
+        if (G->Get_Type()==QUAD) Panels.push_back(std::make_shared<FlatSourceQuadPanel>(G));
+        G->ID = NP++;
+    }
 
     // Store nodes
     StdAppend(Nodes,SurfNodes);
     NN = size(Nodes);
 
-    // Calculate connectivity
-    Specify_Connectivity_Panel_Gradient();
+    // Specify panel Connectivity for panel gradient approach
+    PG_Conn.resize(NN);
+    PG_Angles.resize(NN);
+    for (int i=0; i<NP; i++){
+        if (Panels[i]->Get_Type()==TRI)  Specify_Connectivity_Tri_Panel(Panels[i]);
+        if (Panels[i]->Get_Type()==QUAD) Specify_Connectivity_Quad_Panel(Panels[i]);
+    }
+    std::cout << "Surface::Specify_Connectivity_Panel_Gradient(): Node-Panel connectivity has been specified for panel gradient approach" << std::endl;
+
+    // Specify panel connectivity for B-spline approach
     Specify_Connectivity_BSpline();
 
     // Initialize pEta array
@@ -31,39 +42,99 @@ Surface::Surface(std::vector<SP_Geo> &SurfPans, std::vector<SP_Node> &SurfNodes)
 
 // Surface distribution: Panel gradient approach
 
-void Surface::Specify_Connectivity_Panel_Gradient()
+void Surface::Specify_Connectivity_Tri_Panel(SP_Panel G)
 {
-    // For interpolations of variables over surfaces, the connectivity of the nodes must be specified:
-    // With the panel gradient approach, the (known) gradient over the panel is used and weighted based on the connection angle.
+    SP_Node ND1 = G->Get_Geo()->Get_Node(0);
+    SP_Node ND2 = G->Get_Geo()->Get_Node(1);
+    SP_Node ND3 = G->Get_Geo()->Get_Node(2);
 
-    //--- Body Nodes
-    PG_Conn.resize(NN);
-    PG_Angles.resize(NN);
-    for (int i=0; i<NP; i++){
+    Vector3 Pos1 = ND1->Position_Global();
+    Vector3 Pos2 = ND2->Position_Global();
+    Vector3 Pos3 = ND3->Position_Global();
 
-        SP_Node ND1 = Panels[i]->Get_Geo()->Get_Node(0);
-        SP_Node ND2 = Panels[i]->Get_Geo()->Get_Node(1);
-        SP_Node ND3 = Panels[i]->Get_Geo()->Get_Node(2);
+    // Add this panel to this node's list of Connected panels.
+    PG_Conn[ND1->ID].push_back(G->Get_Geo()->ID);
+    PG_Conn[ND2->ID].push_back(G->Get_Geo()->ID);
+    PG_Conn[ND3->ID].push_back(G->Get_Geo()->ID);
 
-        Vector3 Pos1 = ND1->Position_Global();
-        Vector3 Pos2 = ND2->Position_Global();
-        Vector3 Pos3 = ND3->Position_Global();
+    // Calculate connection angles.
+    Vector3 nd1a = Pos2-Pos1, nd1b = Pos3-Pos1;
+    Vector3 nd2a = Pos1-Pos2, nd2b = Pos3-Pos2;
+    Vector3 nd3a = Pos1-Pos3, nd3b = Pos2-Pos3;
+    PG_Angles[ND1->ID].push_back(acos(nd1a.dot(nd1b)/(nd1a.norm()*nd1b.norm())));
+    PG_Angles[ND2->ID].push_back(acos(nd2a.dot(nd2b)/(nd2a.norm()*nd2b.norm())));
+    PG_Angles[ND3->ID].push_back(acos(nd3a.dot(nd3b)/(nd3a.norm()*nd3b.norm())));
+}
 
-        // Add this panel to this node's list of CNected panels.
-        PG_Conn[ND1->ID].push_back(i);
-        PG_Conn[ND2->ID].push_back(i);
-        PG_Conn[ND3->ID].push_back(i);
+void Surface::Specify_Connectivity_Quad_Panel(SP_Panel G)
+{
+    SP_Node ND1 = G->Get_Geo()->Get_Node(0);
+    SP_Node ND2 = G->Get_Geo()->Get_Node(1);
+    SP_Node ND3 = G->Get_Geo()->Get_Node(2);
+    SP_Node ND4 = G->Get_Geo()->Get_Node(3);
 
-        // Calculate connection angles.
-        Vector3 nd1a = Pos2-Pos1, nd1b = Pos3-Pos1;
-        Vector3 nd2a = Pos1-Pos2, nd2b = Pos3-Pos2;
-        Vector3 nd3a = Pos1-Pos3, nd3b = Pos2-Pos3;
-        PG_Angles[ND1->ID].push_back(acos(nd1a.dot(nd1b)/(nd1a.norm()*nd1b.norm())));
-        PG_Angles[ND2->ID].push_back(acos(nd2a.dot(nd2b)/(nd2a.norm()*nd2b.norm())));
-        PG_Angles[ND3->ID].push_back(acos(nd3a.dot(nd3b)/(nd3a.norm()*nd3b.norm())));
-    }
+    Vector3 Pos1 = ND1->Position_Global();
+    Vector3 Pos2 = ND2->Position_Global();
+    Vector3 Pos3 = ND3->Position_Global();
+    Vector3 Pos4 = ND4->Position_Global();
 
-    std::cout << "Surface::Specify_Connectivity_Panel_Gradient(): Node-Panel connectivity has been specified for panel gradient approach" << std::endl;
+    // Add this panel to this node's list of Connected panels.
+    PG_Conn[ND1->ID].push_back(G->Get_Geo()->ID);
+    PG_Conn[ND2->ID].push_back(G->Get_Geo()->ID);
+    PG_Conn[ND3->ID].push_back(G->Get_Geo()->ID);
+    PG_Conn[ND4->ID].push_back(G->Get_Geo()->ID);
+
+    // Calculate connection angles.
+    Vector3 nd1a = Pos2-Pos1, nd1b = Pos4-Pos1;
+    Vector3 nd2a = Pos1-Pos2, nd2b = Pos3-Pos2;
+    Vector3 nd3a = Pos2-Pos3, nd3b = Pos4-Pos3;
+    Vector3 nd4a = Pos1-Pos4, nd4b = Pos3-Pos4;
+    PG_Angles[ND1->ID].push_back(acos(nd1a.dot(nd1b)/(nd1a.norm()*nd1b.norm())));
+    PG_Angles[ND2->ID].push_back(acos(nd2a.dot(nd2b)/(nd2a.norm()*nd2b.norm())));
+    PG_Angles[ND3->ID].push_back(acos(nd3a.dot(nd3b)/(nd3a.norm()*nd3b.norm())));
+    PG_Angles[ND4->ID].push_back(acos(nd4a.dot(nd4b)/(nd4a.norm()*nd4b.norm())));
+}
+
+void Surface::Calculate_PG_Coeffs_Tri_Panel(SP_Panel G)
+{
+    SP_Node ND1 = G->Get_Geo()->Get_Node(0);
+    SP_Node ND2 = G->Get_Geo()->Get_Node(1);
+    SP_Node ND3 = G->Get_Geo()->Get_Node(2);
+
+    Vector3 CLoc = G->Get_Geo()->Centroid->Position_Global();
+    Matrix3 OLoc = G->Get_Geo()->Centroid->OrientMat_Global();
+    Vector3 P_Loc1 = OLoc * (ND1->Position_Global() - CLoc);
+    Vector3 P_Loc2 = OLoc * (ND2->Position_Global() - CLoc);
+    Vector3 P_Loc3 = OLoc * (ND3->Position_Global() - CLoc);
+
+    Matrix3 Surface_Dist = Matrix3::Ones();
+    Surface_Dist(0,1) = P_Loc1(0);    Surface_Dist(0,2) = P_Loc1(1);
+    Surface_Dist(1,1) = P_Loc2(0);    Surface_Dist(1,2) = P_Loc2(1);
+    Surface_Dist(2,1) = P_Loc3(0);    Surface_Dist(2,2) = P_Loc3(1);
+    PG_Mats[G->Get_Geo()->ID] = Surface_Dist.inverse();
+}
+
+void Surface::Calculate_PG_Coeffs_Quad_Panel(SP_Panel G)
+{
+    SP_Node ND1, ND2, ND3, ND4;
+    ND1 = G->Get_Geo()->Get_Node(0);
+    ND2 = G->Get_Geo()->Get_Node(1);
+    ND3 = G->Get_Geo()->Get_Node(2);
+    ND4 = G->Get_Geo()->Get_Node(3);
+
+    Vector3 CLoc = G->Get_Geo()->Centroid->Position_Global();
+    Matrix3 OLoc = G->Get_Geo()->Centroid->OrientMat_Global();
+    Vector3 P_Loc0 = OLoc * (ND1->Position_Global() - CLoc);
+    Vector3 P_Loc1 = OLoc * (ND2->Position_Global() - CLoc);
+    Vector3 P_Loc2 = OLoc * (ND3->Position_Global() - CLoc);
+    Vector3 P_Loc3 = OLoc * (ND4->Position_Global() - CLoc);
+
+    Matrix Surface_Dist = Matrix::Ones(4,4);
+    Surface_Dist(0,1) = P_Loc0(0);    Surface_Dist(0,2) = P_Loc0(1);    Surface_Dist(0,3) = P_Loc0(0)*P_Loc0(1);
+    Surface_Dist(1,1) = P_Loc1(0);    Surface_Dist(1,2) = P_Loc1(1);    Surface_Dist(1,3) = P_Loc1(0)*P_Loc1(1);
+    Surface_Dist(2,1) = P_Loc2(0);    Surface_Dist(2,2) = P_Loc2(1);    Surface_Dist(2,3) = P_Loc2(0)*P_Loc2(1);
+    Surface_Dist(3,1) = P_Loc3(0);    Surface_Dist(3,2) = P_Loc3(1);    Surface_Dist(3,3) = P_Loc3(0)*P_Loc3(1);
+    PG_Mats[G->Get_Geo()->ID] = Surface_Dist.inverse();
 }
 
 void Surface::Calculate_PG_Coeffs()
@@ -71,27 +142,10 @@ void Surface::Calculate_PG_Coeffs()
     // The coefficients are calculated for each panel which allow for the interpolation of the surface distribution
     PG_Mats.clear();
     PG_Mats.resize(NP);
-
     OpenMPfor
     for (int i=0; i<NP; i++){
-
-        // Set up surface distribution matrix
-        SP_Geo Geo = Panels[i]->Get_Geo();
-        SP_Node ND1 = Geo->Get_Node(0);
-        SP_Node ND2 = Geo->Get_Node(1);
-        SP_Node ND3 = Geo->Get_Node(2);
-        Vector3 CLoc = Geo->Centroid->Position_Global();
-        Matrix3 OLoc = Geo->Centroid->OrientMat_Global();
-        Vector3 P_Loc[3];
-        P_Loc[0] = OLoc * (ND1->Position_Global() - CLoc);
-        P_Loc[1] = OLoc * (ND2->Position_Global() - CLoc);
-        P_Loc[2] = OLoc * (ND3->Position_Global() - CLoc);
-
-        Matrix3 Surface_Dist = Matrix3::Ones();
-        Surface_Dist(0,1) = P_Loc[0](0);    Surface_Dist(0,2) = P_Loc[0](1);
-        Surface_Dist(1,1) = P_Loc[1](0);    Surface_Dist(1,2) = P_Loc[1](1);
-        Surface_Dist(2,1) = P_Loc[2](0);    Surface_Dist(2,2) = P_Loc[2](1);
-        PG_Mats[i] = Surface_Dist.inverse();
+        if (Panels[i]->Get_Type()==TRI)   Calculate_PG_Coeffs_Tri_Panel(Panels[i]);
+        if (Panels[i]->Get_Type()==QUAD)  Calculate_PG_Coeffs_Quad_Panel(Panels[i]);
     }
 }
 
@@ -103,21 +157,34 @@ void Surface::Calculate_PG_Gradients(Vector &Field, std::vector<Vector3> &Gradie
     // Set the value of the gradient on each panel
     std::vector<Vector3> Panel_Gradients(NP);
     OpenMPfor
-        for (int i=0; i<NP; i++){
-        // Set up surface distribution matrix
-        SP_Geo Geo = Panels[i]->Get_Geo();
-        int NDID1 = Geo->Get_Node(0)->ID;
-        int NDID2 = Geo->Get_Node(1)->ID;
-        int NDID3 = Geo->Get_Node(2)->ID;
-        Vector3 SurfDist(Field(NDID1),Field(NDID2),Field(NDID3));
-        Vector3 Sol = PG_Mats[i]*SurfDist;
-        // Now represent this gradient in global coordinates
-        Panel_Gradients[i] = Sol(1)*Geo->Centroid->X_Axis_Global() + Sol(2)*Geo->Centroid->Y_Axis_Global();
+    for (int i=0; i<NP; i++){
+
+        SP_Geo G = Panels[i]->Get_Geo();
+
+        // Solve for surface distribution
+        if (G->Get_Type()==TRI){         // Triangular panels
+            Vector3 SurfDist = Vector3( Field(G->Get_Node(0)->ID),
+                                        Field(G->Get_Node(1)->ID),
+                                        Field(G->Get_Node(2)->ID));
+            Vector3 Sol = PG_Mats[i]*SurfDist;
+            Panel_Gradients[i] = Sol(1)*G->Centroid->X_Axis_Global() +
+                                 Sol(2)*G->Centroid->Y_Axis_Global();
+        }
+        if (G->Get_Type()==QUAD){        // Quadrilateral panels
+            Vector SurfDist = Vector::Zero(4);
+            SurfDist << Field(G->Get_Node(0)->ID),
+                        Field(G->Get_Node(1)->ID),
+                        Field(G->Get_Node(2)->ID),
+                        Field(G->Get_Node(3)->ID);
+            Vector Sol = PG_Mats[i]*SurfDist;
+            Panel_Gradients[i] = Sol(1)*G->Centroid->X_Axis_Global() +
+                                 Sol(2)*G->Centroid->Y_Axis_Global();
+        }
     }
 
     // Calculate the weighted value of gradient for each node using connectivities
     OpenMPfor
-        for (int i=0; i<NN; i++){
+    for (int i=0; i<NN; i++){
         Vector3 Grad = Vector3::Zero();
         Real THTOT = 0;
         for (int n=0; n<size(PG_Angles[i]); n++) THTOT += PG_Angles[i][n];        // Theoretically, this should sum to 2Pi
@@ -144,13 +211,24 @@ void Surface::Specify_Connectivity_BSpline()
     // Direct connectivity via panels
     BSP_Conn.resize(NN);
     for (int i=0; i<NP; i++){
-        int ID1 = Panels[i]->Get_Geo()->Get_Node(0)->ID;
-        int ID2 = Panels[i]->Get_Geo()->Get_Node(1)->ID;
-        int ID3 = Panels[i]->Get_Geo()->Get_Node(2)->ID;
 
-        BSP_Conn[ID1].push_back(ID2);  BSP_Conn[ID1].push_back(ID3);
-        BSP_Conn[ID2].push_back(ID1);  BSP_Conn[ID2].push_back(ID3);
-        BSP_Conn[ID3].push_back(ID1);  BSP_Conn[ID3].push_back(ID2);
+        int ID1, ID2, ID3, ID4;
+        ID1 = Panels[i]->Get_Geo()->Get_Node(0)->ID;
+        ID2 = Panels[i]->Get_Geo()->Get_Node(1)->ID;
+        ID3 = Panels[i]->Get_Geo()->Get_Node(2)->ID;
+        if (Panels[i]->Get_Type()==QUAD) ID4 = Panels[i]->Get_Geo()->Get_Node(3)->ID;
+
+        if (Panels[i]->Get_Type()==QUAD){
+            BSP_Conn[ID1].push_back(ID2);  BSP_Conn[ID1].push_back(ID4);
+            BSP_Conn[ID2].push_back(ID1);  BSP_Conn[ID2].push_back(ID3);
+            BSP_Conn[ID3].push_back(ID2);  BSP_Conn[ID3].push_back(ID4);
+            BSP_Conn[ID4].push_back(ID1);  BSP_Conn[ID4].push_back(ID3);
+        }
+        if (Panels[i]->Get_Type()==TRI){
+            BSP_Conn[ID1].push_back(ID2);  BSP_Conn[ID1].push_back(ID3);
+            BSP_Conn[ID2].push_back(ID1);  BSP_Conn[ID2].push_back(ID3);
+            BSP_Conn[ID3].push_back(ID1);  BSP_Conn[ID3].push_back(ID2);
+        }
     }
 
     // First neighbors
@@ -163,7 +241,7 @@ void Surface::Specify_Connectivity_BSpline()
     // Prepare second neigbors (Compose array, sort, remove duplicates, remove first neighbors from second neighbors list)
     BSP_Conn2.resize(NN);
     OpenMPfor
-        for (int i=0; i<NN; i++){
+    for (int i=0; i<NN; i++){
         for (int j=0; j<int(BSP_Conn[i].size()); j++){
             int idn1 = BSP_Conn[i][j];                     //  Index of neighbor 1
             StdAppend(BSP_Conn2[i],BSP_Conn[idn1]);
@@ -204,7 +282,7 @@ void Surface::BSpline_Coefficients()
     BSP_RBF_Mats.resize(NN);
 
     OpenMPfor
-        for (int node=0; node<NN; node++){
+    for (int node=0; node<NN; node++){
 
         std::vector<SP_Node> all_neighbors;
         all_neighbors.push_back(Nodes[node]);
@@ -295,7 +373,7 @@ void Surface::BSpline_Gradient(Vector &Field, std::vector<Vector3> &Gradients)
 
 // Surface integration
 
-Real Surface::Integrate_Quantities_Tri(Matrix &Field, Real exp)
+Real Surface::Integrate_Quantities_Quadrature(Matrix &Field, Real exp)
 {
     // This function loops over surface elements and uses quadrature to calculate the integral over the surface
     // for triangular elements
@@ -307,9 +385,17 @@ Real Surface::Integrate_Quantities_Tri(Matrix &Field, Real exp)
             Real xi = N->QuadPos(0);
             Real eta  = N->QuadPos(1);
             Real t1 = 0.;
-            t1 += pow(Field(Geo->Get_Node(0)->ID),exp)*(1-xi-eta);
-            t1 += pow(Field(Geo->Get_Node(1)->ID),exp)*eta;
-            t1 += pow(Field(Geo->Get_Node(2)->ID),exp)*xi;
+            if (Geo->Get_Type()==TRI){                   // Triangular panel
+                t1 += pow(Field(Geo->Get_Node(0)->ID),exp)*(1-xi-eta);
+                t1 += pow(Field(Geo->Get_Node(1)->ID),exp)*eta;
+                t1 += pow(Field(Geo->Get_Node(2)->ID),exp)*xi;
+            }
+            if (Geo->Get_Type()==QUAD){                   // Quadrilateral panel
+                t1 += pow(Field(Geo->Get_Node(0)->ID),exp)*0.25*(1-xi)*(1-eta);
+                t1 += pow(Field(Geo->Get_Node(1)->ID),exp)*0.25*(1-xi)*(1+eta);
+                t1 += pow(Field(Geo->Get_Node(2)->ID),exp)*0.25*(1+xi)*(1+eta);
+                t1 += pow(Field(Geo->Get_Node(3)->ID),exp)*0.25*(1+xi)*(1-eta);
+            }
             I += N->Weight*t1;
         }
     }
@@ -330,6 +416,7 @@ void Surface::Export_VTP()
     // CreateDirectory(OutputPath);        // Create output file path if it doesn't yet exist
 
     std::string FilePath = OutputPath + SurfaceName + "_" + std::to_string(currentTimeStep) + ".vtp";
+    std::cout << FilePath << std::endl;
     std::ofstream vtifile( FilePath.c_str() );
     vtifile.precision(vtiPrecision);
     if(!vtifile.is_open())
@@ -351,17 +438,36 @@ void Surface::Export_VTP()
     }
     vtifile << "            </DataArray> "   << "\n";
     vtifile << "        </Points> "   << "\n";
+
     vtifile << "        <Polys>"   << "\n";
     vtifile << "            <DataArray type='Int32' Name='connectivity' format='ascii'>" << " \n";
+    std::vector<int> offsets;
+    int offsetcount = 0;
     for (int i=0; i<NP; i++){
-        vtifile << std::scientific  << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(0)->ID
-                << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(1)->ID
-                << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(2)->ID;
+        if (Panels[i]->Get_Type()==TRI){
+            vtifile << std::scientific  << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(0)->ID
+                                        << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(1)->ID
+                                        << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(2)->ID;
+            offsets.push_back(offsetcount);
+            offsetcount += 3;
+        }
+        if (Panels[i]->Get_Type()==QUAD){
+            vtifile << std::scientific  << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(0)->ID
+                                        << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(1)->ID
+                                        << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(2)->ID
+                                        << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(3)->ID;
+            offsets.push_back(offsetcount);
+            offsetcount += 4;
+        }
     }
     vtifile << "            </DataArray> "   << "\n";
+
     vtifile << "            <DataArray type='Int32' Name='offsets' format='ascii'>" << " \n";
-    for (int i=0; i<NP; i++)  vtifile << std::scientific  << std::setw(vtiWidth) << 3*(i+1);
+    // for (int i=0; i<NP; i++)  vtifile << std::scientific  << std::setw(vtiWidth) << 3*(i+1);
+    for (int i=0; i<NP; i++)  vtifile << std::scientific  << std::setw(vtiWidth) << offsets[i];
     vtifile << "            </DataArray> "   << "\n";
+
+
     vtifile << "        </Polys>"   << "\n";
 
     vtifile << "            <PointData Scalars='node_scalar'>"   << "\n";

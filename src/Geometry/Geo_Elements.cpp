@@ -90,7 +90,7 @@ void Tri_Element::Set_Quad_Nodes()
         Real eta  = PY[i];
 
         Vector3 P(0,0,0);
-        P += Nodes[0]->Position_Local()*(1-xi-eta);
+        P += Nodes[0]->Position_Local()*(1.-xi-eta);
         P += Nodes[1]->Position_Local()*(eta);
         P += Nodes[2]->Position_Local()*(xi);
 

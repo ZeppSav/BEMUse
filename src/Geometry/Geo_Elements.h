@@ -27,6 +27,8 @@
 
 #include "Node.h"
 
+enum GeoType {TRI, QUAD};
+
 namespace BEMUse
 {
 
@@ -34,7 +36,6 @@ class Geometry_Element
 {
 
 protected:
-
 
 public:
 
@@ -45,6 +46,8 @@ public:
     virtual void Set_Centroid()         {}
     virtual void Set_Quad_Nodes()       {}
     virtual void Reorder_Nodes()        {}
+    virtual GeoType Get_Type()          {}
+
 
     //--- Geometry construction
     std::vector<SP_Node>    Nodes;
@@ -52,13 +55,14 @@ public:
     SP_Node Centroid = nullptr;
 
     //--- Getters
-    int     Get_N()     {return Nodes.size();}
+    int     Get_N()         {return Nodes.size();}
     Real    Get_Lmin();
     Real    Get_Lmax();
     SP_Node Get_Node(int i) {return Nodes[i];}
 
     //--- Public data
     Real Area = 0.0;
+    int ID = 0;
 
 //    //--- Specification data
 //    bool isDipole = false;
@@ -124,6 +128,7 @@ public:
     void Reorder_Nodes() {
         std::swap(Nodes[0],Nodes[2]);
     }
+    GeoType Get_Type()      {return TRI;}
 };
 
 class Quad_Element : public Area_Element
@@ -152,6 +157,7 @@ public:
         std::swap(Nodes[0],Nodes[3]);
         std::swap(Nodes[1],Nodes[2]);
     }
+    GeoType Get_Type()      {return QUAD;}
 };
 
 typedef std::shared_ptr<Geometry_Element> SP_Geo;

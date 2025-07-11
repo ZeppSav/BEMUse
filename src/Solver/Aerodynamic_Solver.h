@@ -26,6 +26,7 @@
 #define AERODYNAMIC_SOLVER_H
 
 #include "Solver_Base.h"
+#include "Surface.h"
 
 namespace BEMUse
 {
@@ -39,6 +40,20 @@ protected:
     // CMatrix DMat;    // Influence coefficient matrix (source terms)
     // CMatrix RHSMat;  // RHS vector which contains the Boundary condition to be solved for
     // CMatrix SolMat;  // Solution vector
+
+    //--- Surfaces
+    Surface *BodySurface;
+
+    //--- Geometry
+    std::vector<SP_Node>    Body_Nodes;
+    // std::vector<SP_Node>    Wall_Nodes;
+    // std::vector<SP_Node>    SB_Nodes;
+    // std::vector<SP_Node>    FS_Nodes;
+
+    std::vector<SP_Panel>   Body_Panels;
+    // std::vector<SP_Panel>   Wall_Panels;
+    // std::vector<SP_Panel>   SB_Panels;
+    // std::vector<SP_Panel>   FS_Panels;
 
     //--- Problem Setup
     void Create_Panels(Boundary *B);
@@ -70,6 +85,14 @@ public:
 
     //--- Post processing
     void Post_Processing(Boundary *B)       {}
+
+    void Get_Surfaces(Surface*& S1, Surface*& S2, Surface*& S3, Surface*& S4)
+    {
+        S1 = BodySurface;
+        // if (isWall)         S2 = WallSurface;
+        // if (isSeaBed)       S3 = SeaBedSurface;
+        // if (isFreeSurface)  S4 = FreeSurface;
+    }
 
 };
 

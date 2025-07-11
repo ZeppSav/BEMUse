@@ -63,6 +63,7 @@ public:
     //--- Getters
     SP_Node Centroid()  {return Geo->Centroid;}
     SP_Geo  Get_Geo()   {return Geo;}
+    GeoType Get_Type()  {return Geo->Get_Type();}
 
     //--- Analysis parameters
     Real k = 0.0;       // Frequency parameter

@@ -61,7 +61,10 @@ public:
     Surface(std::vector<SP_Geo> &SurfPans, std::vector<SP_Node> &SurfNodes);
 
     // Surface distribution: Panel gradient approach
-    void Specify_Connectivity_Panel_Gradient();
+    void Specify_Connectivity_Tri_Panel(SP_Panel G);
+    void Specify_Connectivity_Quad_Panel(SP_Panel G);
+    void Calculate_PG_Coeffs_Tri_Panel(SP_Panel G);
+    void Calculate_PG_Coeffs_Quad_Panel(SP_Panel G);
     void Calculate_PG_Coeffs();
     void Calculate_PG_Gradients(Vector &Field, std::vector<Vector3> &Gradient);
 
@@ -71,7 +74,7 @@ public:
     void BSpline_Gradient(Vector &Field, std::vector<Vector3> &Gradients);
 
     // Surface integration
-    Real Integrate_Quantities_Tri(Matrix &Field, Real exp);
+    Real Integrate_Quantities_Quadrature(Matrix &Field, Real exp);
 
     // Timestepping vars
     int currentTimeStep=0;

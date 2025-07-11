@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
     P.push_back(BEMUse::Parameter("NPanels_Azimuthal",64));
     P.push_back(BEMUse::Parameter("Cosine_Disc",true));
     P.push_back(BEMUse::Parameter("Uinf_x",Real(1.0)));
-    P.push_back(BEMUse::Parameter("Triangular_Panels",true));
+    // P.push_back(BEMUse::Parameter("Triangular_Panels",true));
     BEMUse_Test *Test1 = new Ellipsoid_Test(P); Test1->Execute_Test();
 
 }

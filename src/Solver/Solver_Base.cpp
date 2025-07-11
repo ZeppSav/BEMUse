@@ -22,6 +22,8 @@ void Solver::Specify_BC_Const_Pans(Boundary *B)
         Vector3 BCP = P+F*Z;
         BC_Pos.push_back(BCP);
     }
+
+    BC = Matrix::Zero(NPTot,1);
 }
 
 }
