@@ -241,7 +241,7 @@ void Hydrodynamic_Radiation_Solver::Setup(Boundary *B)
 {
     // Prepare system
     Create_Panels(B);
-    Specify_BC_Const_Pans(B);
+    Specify_BC_Const_Prev(B);
     Prepare_Linear_System();
 
     // Prepare matrices for post processing

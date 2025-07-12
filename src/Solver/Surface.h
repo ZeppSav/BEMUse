@@ -27,7 +27,8 @@
 #ifndef SURFACE_H
 #define SURFACE_H
 
-#include "Solver_Base.h"
+#include "../Boundary/Boundary_Base.h"
+#include "../Geometry/Panel.h"
 
 namespace BEMUse
 {
@@ -37,6 +38,7 @@ class Surface
     //--- Geometric Objects
     int NP = 0;                     // Number of panels
     int NN = 0;                     // Number of Nodes
+    DistType PanDist = CONSTANT;
     std::vector<SP_Node> Nodes;
     std::vector<SP_Panel> Panels;
 
@@ -58,7 +60,7 @@ class Surface
 
 public:
     // Constructor
-    Surface(std::vector<SP_Geo> &SurfPans, std::vector<SP_Node> &SurfNodes);
+    Surface(std::vector<SP_Geo> &SurfPans, std::vector<SP_Node> &SurfNodes, DistType Type);
 
     // Surface distribution: Panel gradient approach
     void Specify_Connectivity_Tri_Panel(SP_Panel G);
@@ -90,6 +92,8 @@ public:
     // Visualisation
     bool OutputWaveHeight = false;
     void Export_VTP();
+    void Export_VTP_Constant();
+    void Export_VTP_Bilinear();
 };
 
 

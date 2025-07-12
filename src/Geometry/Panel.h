@@ -30,6 +30,8 @@
 namespace BEMUse
 {
 
+enum DistType {CONSTANT, BILINEAR};
+
 class PanelClass
 {
 protected:

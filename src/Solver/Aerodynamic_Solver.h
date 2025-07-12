@@ -45,12 +45,12 @@ protected:
     Surface *BodySurface;
 
     //--- Geometry
-    std::vector<SP_Node>    Body_Nodes;
+    // std::vector<SP_Node>    Body_Nodes;
     // std::vector<SP_Node>    Wall_Nodes;
     // std::vector<SP_Node>    SB_Nodes;
     // std::vector<SP_Node>    FS_Nodes;
 
-    std::vector<SP_Panel>   Body_Panels;
+    // std::vector<SP_Panel>   Body_Panels;
     // std::vector<SP_Panel>   Wall_Panels;
     // std::vector<SP_Panel>   SB_Panels;
     // std::vector<SP_Panel>   FS_Panels;

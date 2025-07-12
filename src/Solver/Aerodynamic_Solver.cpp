@@ -20,29 +20,15 @@ void Aerodynamic_Solver::Set_Flags(std::vector<bool> &D)
 //--- Problem Setup
 void Aerodynamic_Solver::Create_Panels(Boundary *B)
 {
-    // Generate source panels.
-    std::vector<SP_Geo> Geo;
-    B->Get_Elements(Geo);
-
     // Generate surface representation
     std::vector<SP_Geo> BodyGeo;
-    std::vector<SP_Node> BodyNodes;
     B->Get_Elements(BodyGeo);
-    B->Get_Nodes(BodyNodes);
-    BodySurface = new Surface(BodyGeo,BodyNodes);
+    B->Get_Nodes(Body_Nodes);
+    BodySurface = new Surface(BodyGeo,Body_Nodes,PanelDist);
     BodySurface->Set_Name("Body");
     BodySurface->Get_Panels(Body_Panels);
-
-    NPA = Geo.size();
-    for (int i=0; i<NPA; i++){
-        if (Geo[i]->Get_N()==3)     Panels.push_back(std::make_shared<FlatSourceTriPanel>(Geo[i]));
-        if (Geo[i]->Get_N()==4)     Panels.push_back(std::make_shared<FlatSourceQuadPanel>(Geo[i]));
-    }
-
-    NPTot = NPA + NPAux;
-
-    // Now specify panel nodes (for BC later)
-    for (SP_Panel P : Panels)   Panel_Nodes.push_back(P->Get_Geo()->Centroid);
+    NPA = size(Body_Panels);
+    NPTot = NPA;        // + NPAux; No auxiliary panels now
 }
 
 void Aerodynamic_Solver::Prepare_Linear_System()
@@ -55,11 +41,12 @@ void Aerodynamic_Solver::Prepare_Linear_System()
     OpenMPfor
     for (int S=0; S<NPTot; S++){
         for (int R=0; R<NPTot; R++){
-            Panels[S]->Inf_SingleDoubleLayer(BC_Pos[R],G(R,S),H(R,S));
+            Body_Panels[S]->Inf_SingleDoubleLayer(BC_Pos[R],G(R,S),H(R,S));
         }
     }
 
     rPPLU.compute(H);
+    // GMRES.compute(H);
 }
 
 //--- Setup
@@ -67,7 +54,8 @@ void Aerodynamic_Solver::Setup(Boundary *B)
 {
     // Prepare system
     Create_Panels(B);
-    Specify_BC_Const_Pans(B);
+    if (PanelDist==CONSTANT)    Specify_BC_Const_Pans(B);
+    if (PanelDist==BILINEAR)    Specify_BC_Linear_Pans(B);
     Prepare_Linear_System();
 
     // Set solver parameters
@@ -82,7 +70,7 @@ void Aerodynamic_Solver::Set_External_BC(std::vector<Vector3> &Vels)
     // This specifies the boundary condition vector in the case that the velocity field is specified from an outisde source.
     OpenMPfor
     for (int i=0; i<NPTot; i++){
-        Vector3 Z = Panels[i]->Get_Geo()->Centroid->Z_Axis_Global();
+        Vector3 Z = Body_Panels[i]->Get_Geo()->Centroid->Z_Axis_Global();
         BC(i) = Vels[i].dot(Z);
     }
 }
@@ -94,31 +82,11 @@ void Aerodynamic_Solver::Solve_Steady()
 
     S = G*BC;               // Specify source strength
     X = rPPLU.solve(S);     // Specify perturbation potential
+    // X = GMRES.solve(S);     // Specify perturbation potential
 
-//     //--- Set BC
-//     RHSMat = CMatrix::Zero(NPTot,1);
-//     for (int i=0; i<NPTot; i++){
-//         Vector3 P = Panel_Nodes[i]->Position_Global();
-//         Vector3 N = Panel_Nodes[i]->Z_Axis_Global();
-//         Vector3 PCN = P.cross(N);
-// //        RHSMat(i) = CReal(N(2),0.0);        // Translation
-//         RHSMat(i) = CReal(PCN(0),0.0);      // Rotation
-//     }
-
-    //--- Calc solution
-    // CMatrix RHSTemp = SMat*RHSMat;
-
-//     // Prepare linear system
-// //    PPLU.compute(DMat);                     // Prepare linear solver for solution
-//     GMRES.compute(DMat);
-
-//     // Solve
-// //    CMatrix Phi_J = PPLU.solve(RHSTemp);                       // Solution using a partial piv Lu decomposition
-//     CMatrix Phi_J = GMRES.solve(RHSTemp);
-// //    VisMat = DMat;
-//     std::cout << "GMRES: #iterations: " << GMRES.iterations() << ", estimated error: " << GMRES.error() << std::endl;
-
-//     RadSolArray.push_back(Phi_J);
+    // Store solution on panels
+    for (int i=0; i<NPTot; i++) Body_Panels[i]->Get_Geo()->Centroid->VWeight(0) = X(i); // Constant strength
+    // BodySurface->
 }
 
 }

@@ -26,8 +26,8 @@
 #define SOLVER_BASE_H
 
 #include "../Boundary/Boundary_Base.h"
-#include "../Geometry/Panel.h"
-// #include "Surface.h"
+// #include "../Geometry/Panel.h"
+#include "Surface.h"
 
 #include <Eigen/IterativeLinearSolvers>
 #include <unsupported/Eigen/IterativeSolvers>
@@ -44,9 +44,12 @@ protected:
     //--- Solver vars
     std::vector<SP_Panel>   Panels, Panels_Aux;
     std::vector<SP_Node>    Panel_Nodes;
+    std::vector<SP_Node>    BC_Nodes;
     std::vector<Vector3>    BC_Pos;
     int NPA=0, NPAux=0, NPTot=0;              // Panel counts
     int NA=0, NB=0, NR=0, NAux=0, NATot=0;
+
+    DistType PanelDist = CONSTANT;          // What type of distribution is being used on the panels?
 
     //--- Solver variables ( these are updated at every timestep)
     Matrix G;                       // Matrices of influence coefficients
@@ -55,6 +58,23 @@ protected:
     Matrix BC;                      // Known BC for solution of linear system
     Matrix S;                       // panel strength
     Matrix HInv;                    // Inverse H matrix
+
+    //--- Surfaces
+    Surface *BodySurface;
+    Surface *WallSurface;
+    Surface *SeaBedSurface;
+    Surface *FreeSurface;
+
+    //--- Geometry
+    std::vector<SP_Node>    Body_Nodes;     // Nodes on the solid body
+    std::vector<SP_Node>    Wall_Nodes;     // Nodes of any sort of contianing wall
+    std::vector<SP_Node>    SB_Nodes;       // Nodes on the sea bed (hydrodynamics)
+    std::vector<SP_Node>    FS_Nodes;       // Nodes on the free surface (hydrodynamics)
+
+    std::vector<SP_Panel>   Body_Panels;    // Panels on the solid body
+    std::vector<SP_Panel>   Wall_Panels;    // Panels of any sort of contianing wall
+    std::vector<SP_Panel>   SB_Panels;      // Panels on the sea bed (hydrodynamics)
+    std::vector<SP_Panel>   FS_Panels;      // Panels on the free surface (hydrodynamics)
 
     //--- Linear system direct solver objects
     Eigen::PartialPivLU<CMatrix> PPLU;
@@ -75,7 +95,8 @@ protected:
 
     //--- Create boundary condition points
     void Specify_BC_Const_Pans(Boundary *B);
-    void Specify_BC_Bilin_Pans(Boundary *B);
+    void Specify_BC_Const_Prev(Boundary *B);
+    void Specify_BC_Linear_Pans(Boundary *B);
 
     //--- Output files
     std::string OutputDirectory = "Output";

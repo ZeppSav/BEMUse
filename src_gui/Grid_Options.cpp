@@ -397,7 +397,6 @@ void Grid_Options::Generate_SemiEllipsoid()
     if (ui->CosineDist->isChecked())        Parameters.push_back(BEMUse::Parameter("Cosine_Disc",true));
     else                                    Parameters.push_back(BEMUse::Parameter("Cosine_Disc",false));
     // Parameters.push_back(BEMUse::Parameter("Triangular_Panels",true)); // Flag generates triangular panels
-    Parameters.push_back(BEMUse::Parameter("Triangular_Panels",true)); // Flag generates triangular panels
 }
 
 void Grid_Options::Generate_Cylinder()
