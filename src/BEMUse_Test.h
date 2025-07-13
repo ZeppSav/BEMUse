@@ -148,12 +148,10 @@ public:
 
         // Solve system
         Solver->Solve_Steady();
-        std::cout << "Solved" << std::endl;
         // Solver->Get_Solution(Sol_vector);
 
         if (BodySurface)    BodySurface->Export_VTP();
 
-        std::cout << "Exported" << std::endl;
 
         // Output solution
         // Output_Results();

@@ -423,8 +423,6 @@ void Surface::Export_VTP_Constant()
 {
     //--- Generate a vtp file of the gemetry
 
-    std::cout <<" Constnt" << std::endl;
-
     // This essentially does the same thing as the case for the blinear panels, except that additional nodes are
     // created for constant strength panels
 
@@ -462,8 +460,6 @@ void Surface::Export_VTP_Constant()
 
         // Connect
     }
-
-    std::cout << NP << " " << VNodes.size() << " " << Sigma.size() << " " << Connect.size() << " " << NP << " " <<
 
     CreateDirectory(OutputDirectory);   // Create directory if it doesn't yet exist
     // CreateDirectory(OutputPath);        // Create output file path if it doesn't yet exist

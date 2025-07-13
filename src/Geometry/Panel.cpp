@@ -172,6 +172,409 @@ void FlatSourceTriPanel::Inf_SingleDoubleLayerQuad(const Vector3 &P, Real &S, Re
     D = Dout;
 }
 
+//--- Linear strength distribution
+
+void FlatSourceTriPanel::Inf_SingleLayer_LinDist(const Vector3 &P, Real &S1, Real &S2, Real &S3)
+{
+    // This implementation is from Letournel (doi: )
+
+    // Calculate geometric parameters.
+    Vector3 CLoc = Centroid()->Position_Global();
+    Matrix3 OLoc = Centroid()->OrientMat_Global();
+
+    Vector3 P0 = OLoc * (Geo->Nodes[0]->Position_Global() - CLoc);
+    Vector3 P1 = OLoc * (Geo->Nodes[1]->Position_Global() - CLoc);
+    Vector3 P2 = OLoc * (Geo->Nodes[2]->Position_Global() - CLoc);
+    Vector3 PG = OLoc * (Geo->Centroid->Position_Global() - CLoc);
+
+    // Normal of source panel
+    Vector3 P_Normal = Centroid()->Z_Axis_Global();
+
+    // Receiver node
+    Vector3 PL = OLoc * (P - CLoc);
+
+    Matrix3 AM;
+    Matrix3 AB;
+
+    AM.row(0) = PL - P0;
+    AM.row(1) = PL - P1;
+    AM.row(2) = PL - P2;
+
+    // Calculate edge vectors of the triangle
+    AB.row(0) = P1 - P0;
+    AB.row(1) = P2 - P1;
+    AB.row(2) = P0 - P2;
+
+    // -----------------------
+    // Delta Calculation (see Letournel)
+    // -----------------------
+    Vector3 P0P1 = AB.row(0);
+    Vector3 P0P2 = -AB.row(2);
+
+    Real P0P1_sq = P0P1.squaredNorm();
+    Real P0P2_sq = P0P2.squaredNorm();
+
+    Real P0P1_P0P2_dot = P0P1.dot(P0P2);
+
+    Real Delta = P0P1_sq * P0P2_sq - P0P1_P0P2_dot * P0P1_P0P2_dot;
+
+    // -----------------------
+    // A B Calculation (see Letournel)
+    // -----------------------
+    Vector3 A = P0P2_sq * P0P1 - P0P1_P0P2_dot * P0P2;
+    Vector3 B = -P0P1_P0P2_dot * P0P1 + P0P1_sq * P0P2;
+
+    // -----------------------
+    // Sigma Calculation (see Letournel)
+    // -----------------------
+    Matrix3 Sigma;
+    Sigma.row(0) = -(A + B);
+    Sigma.row(1) = A;
+    Sigma.row(2) = B;
+    Sigma *= 1. / Delta;
+
+    // -----------------------
+    // S_sigma Calculation (see Letournel)
+    // -----------------------
+    Vector3 R_k = AM.rowwise().norm();
+    Vector3 d_k;
+    Vector3 N_k;
+    Vector3 N_k_1;
+    Vector3 D_k_1;
+    Vector3 D_k;
+
+    Real S_sigma = 0.;
+
+    Real Z = (PL - PG).dot(P_Normal);
+    Real Z_abs = abs(Z);
+
+    // -----------------------
+    // Line Integral I_sigma
+    // -----------------------
+    Vector3 I_sigma(0., 0., 0.);
+    Vector3 a_lineIntegral;
+    Vector3 b_lineIntegral;
+    Vector3 q0;
+    Vector3 q1;
+    Vector3 K2;
+
+    Real Temp;
+
+    for (int j = 0; j < 3; ++j) {
+        Real AM_sq_norm = AM.row(j).squaredNorm();
+        Real AB_AM_dot = AB.row(j).dot(AM.row(j));
+        Real AB_sq_norm = AB.row(j).squaredNorm();
+        Real AB_norm = sqrt(AB_sq_norm);
+
+        // S_sigma
+        int next = (j + 1) % 3;
+
+        N_k(j) = 2. * AM.row(j).dot(P_Normal.cross(AB.row(j)));
+        d_k(j) = AB_norm;
+
+        N_k_1(j) = R_k(next) + R_k(j) + d_k(j);
+        D_k_1(j) = R_k(next) + R_k(j) - d_k(j);
+        D_k(j) = (R_k(next) + R_k(j)) * (R_k(next) + R_k(j)) - d_k(j) * d_k(j) + 2 * Z_abs * (R_k(next) + R_k(j));
+
+        S_sigma += 0.5 * N_k(j) / d_k(j) * log(N_k_1(j) / D_k_1(j)) - 2 * Z_abs * atan(N_k(j) / D_k(j));
+
+        // I_sigma
+
+        K2(j) = AM_sq_norm - AB_AM_dot * AB_AM_dot / AB_sq_norm;
+
+        Real K2_sqrt = sqrt(K2(j));
+
+        q0(j) = -AB_AM_dot / (AB_norm * K2_sqrt);
+        q1(j) = (AB_sq_norm - AB_AM_dot) / (AB_norm * K2_sqrt);
+
+        a_lineIntegral(j) = asinh(q0(j));
+        b_lineIntegral(j) = asinh(q1(j));
+
+        Real denom = 2.0 * AB_norm;
+        Real sinh_2a = sinh(2.0 * a_lineIntegral(j));
+        Real sinh_2b = sinh(2.0 * b_lineIntegral(j));
+
+        Temp = K2(j) / denom * (b_lineIntegral(j) - a_lineIntegral(j) + 0.5 * (sinh_2b - sinh_2a));
+
+        I_sigma += Temp * (P_Normal.cross(AB.row(j)));
+    }
+
+    // -----------------------
+    // SRC and DIP Influence
+    // -----------------------
+    Vector3 I_single;
+    Vector3 P_I(1., 1., 1.);
+    P_I = P_I / 3.;
+
+    I_single = (P_I + Sigma * (PL - PG)) * S_sigma - Sigma * I_sigma;
+
+    S1 = I_single(0) * FourPIinv;
+    S2 = I_single(1) * FourPIinv;
+    S3 = I_single(2) * FourPIinv;
+}
+
+void FlatSourceTriPanel::Inf_DoubleLayer_LinDist(const Vector3 &P, Real &D1, Real &D2, Real &D3)
+{
+    // This implementation is from Letournel (doi: )
+
+    // Calculate geometric parameters.
+    Vector3 CLoc = Centroid()->Position_Global();
+    Matrix3 OLoc = Centroid()->OrientMat_Global();
+
+    // std::cout << "CLoc " << CLoc << " complete.\n" << std::endl;
+    // std::cout << "OLoc " << OLoc << " complete.\n" << std::endl;
+
+    Vector3 P0 = OLoc * (Geo->Nodes[0]->Position_Global() - CLoc);
+    Vector3 P1 = OLoc * (Geo->Nodes[1]->Position_Global() - CLoc);
+    Vector3 P2 = OLoc * (Geo->Nodes[2]->Position_Global() - CLoc);
+    Vector3 PG = OLoc * (Geo->Centroid->Position_Global() - CLoc);
+
+    // Normal of source panel
+    Vector3 P_Normal = Centroid()->Z_Axis_Global();
+
+    // Receiver node
+    Vector3 PL = OLoc * (P - CLoc);
+
+    Matrix3 AM;
+    Matrix3 AB;
+
+    AM.row(0) = PL - P0;
+    AM.row(1) = PL - P1;
+    AM.row(2) = PL - P2;
+
+    // Calculate edge vectors of the triangle
+    AB.row(0) = P1 - P0;
+    AB.row(1) = P2 - P1;
+    AB.row(2) = P0 - P2;
+
+    // -----------------------
+    // Delta Calculation (see Letournel)
+    // -----------------------
+    Vector3 P0P1 = AB.row(0);
+    Vector3 P0P2 = -AB.row(2);
+
+    Real P0P1_sq = P0P1.squaredNorm();
+    Real P0P2_sq = P0P2.squaredNorm();
+
+    Real P0P1_P0P2_dot = P0P1.dot(P0P2);
+
+    Real Delta = P0P1_sq * P0P2_sq - P0P1_P0P2_dot * P0P1_P0P2_dot;
+
+    // -----------------------
+    // A B Calculation (see Letournel)
+    // -----------------------
+    Vector3 A = P0P2_sq * P0P1 - P0P1_P0P2_dot * P0P2;
+    Vector3 B = -P0P1_P0P2_dot * P0P1 + P0P1_sq * P0P2;
+
+    // -----------------------
+    // Sigma Calculation (see Letournel)
+    // -----------------------
+    Matrix3 Sigma;
+    Sigma.row(0) = -(A + B);
+    Sigma.row(1) = A;
+    Sigma.row(2) = B;
+
+    Sigma *= 1. / Delta;
+
+    // -----------------------
+    // S_sigma Calculation (see Letournel)
+    // -----------------------
+    Vector3 R_k = AM.rowwise().norm();
+    Vector3 d_k;
+    Vector3 N_k;
+    Vector3 N_k_1;
+    Vector3 D_k_1;
+    Vector3 D_k;
+
+    Real Z = (PL - PG).dot(P_Normal);
+    Real Z_abs = abs(Z);
+
+    // -----------------------
+    // Line Integral I_sigma
+    // -----------------------
+    Vector3 q0;
+    Vector3 q1;
+    Vector3 K2;
+
+    // -----------------------
+    // S_mu Calculation (see Letournel)
+    // -----------------------
+    Real S_mu = 0.;
+    Real Z_Sign;
+
+    if (Z > 0) {
+        Z_Sign = 1;
+    } else {
+        Z_Sign = -1;
+    }
+
+    // ------------------------
+    // I_mu Calculation (see Letournel)
+    // ------------------------
+    Vector3 I_mu(0., 0., 0.);
+    Real logterm_q;
+
+    for (int j = 0; j < 3; ++j) {
+        Real AM_sq_norm = AM.row(j).squaredNorm();
+        Real AB_AM_dot = AB.row(j).dot(AM.row(j));
+        Real AB_sq_norm = AB.row(j).squaredNorm();
+        Real AB_norm = sqrt(AB_sq_norm);
+
+        int next = (j + 1) % 3;
+
+        N_k(j) = 2. * AM.row(j).dot(P_Normal.cross(AB.row(j)));
+        d_k(j) = AB_norm;
+
+        N_k_1(j) = R_k(next) + R_k(j) + d_k(j);
+        D_k_1(j) = R_k(next) + R_k(j) - d_k(j);
+        D_k(j) = (R_k(next) + R_k(j)) * (R_k(next) + R_k(j)) - d_k(j) * d_k(j) + 2 * Z_abs * (R_k(next) + R_k(j));
+
+        K2(j) = AM_sq_norm - AB_AM_dot * AB_AM_dot / AB_sq_norm;
+
+        Real K2_sqrt = sqrt(K2(j));
+
+        q0(j) = -AB_AM_dot / (AB_norm * K2_sqrt);
+        q1(j) = (AB_sq_norm - AB_AM_dot) / (AB_norm * K2_sqrt);
+
+        // S_mu
+        S_mu += 2 * Z_Sign * atan(N_k(j) / D_k(j));
+
+        // I_mu
+        Real sqrt_1_plus_q0_sq = sqrt(1. + q0(j) * q0(j));
+        Real sqrt_1_plus_q1_sq = sqrt(1. + q1(j) * q1(j));
+
+        logterm_q = log((q1(j) + sqrt_1_plus_q1_sq) / (q0(j) + sqrt_1_plus_q0_sq));
+
+        I_mu += (AM.row(j).cross(AB.row(j))) / AB_norm * logterm_q;
+    }
+
+    Vector3 I_double;
+    Vector3 P_I(1., 1., 1.);
+    P_I = P_I / 3.;
+
+    I_double = -1. * (P_I + Sigma * (PL - PG)) * S_mu - Sigma * I_mu;
+
+    D1 = I_double(0) * FourPIinv;
+    D2 = I_double(1) * FourPIinv;
+    D3 = I_double(2) * FourPIinv;
+}
+
+void FlatSourceTriPanel::Inf_SingleDoubleLayer_LinDist(const Vector3 &P, Real &S1, Real &S2, Real &S3, Real &D1, Real &D2, Real &D3)
+{
+    // Newman, J.N., "Distributions of sources and normal dipoles over a quadrilateral panel",
+    // 1986, https://doi.org/10.1007/BF00042771
+
+    Real R[3], S[3], m[3], cs[3], sn[3], B[3], e[3], h[3], Q[3], u[3], U[3], Pn[3];
+    Vector3 r[3], s[3];
+
+    Vector3 CLoc = Centroid()->Position_Global();
+    Matrix3 OLoc = Centroid()->OrientMat_Global();
+
+    Vector3 P0 = OLoc * (Geo->Nodes[0]->Position_Global() - CLoc);
+    Vector3 P1 = OLoc * (Geo->Nodes[1]->Position_Global() - CLoc);
+    Vector3 P2 = OLoc * (Geo->Nodes[2]->Position_Global() - CLoc);
+    Vector3 PL = OLoc * (P - CLoc);
+
+    // if (PL(2)==0) PL(2) -= 1.e-16;          // Avoid issues with evaluation points exactly at zero.
+    // Real dFac = 1.e-8;
+    // if ((PL-P0).norm() < dFac || (PL-P1).norm() < dFac|| (PL-P2).norm() < dFac){
+    //     S1 = 0.; S2 = 0.; S3 = 0.;
+    //     D1 = 0.; D2 = 0.; D3 = 0.;
+    //     return;
+    // }
+
+    r[0] = PL - P0; R[0] = r[0].norm();
+    r[1] = PL - P1; R[1] = r[1].norm();
+    r[2] = PL - P2; R[2] = r[2].norm();
+
+    s[0] = P1 - P0; S[0] = s[0].norm();
+    s[1] = P2 - P1; S[1] = s[1].norm();
+    s[2] = P0 - P2; S[2] = s[2].norm();
+
+    m[0] = (P1(1) - P0(1)) / (P1(0) - P0(0));
+    m[1] = (P2(1) - P1(1)) / (P2(0) - P1(0));
+    m[2] = (P0(1) - P2(1)) / (P0(0) - P2(0));
+
+    //cos and sin of panel
+    cs[0] = (P1(0) - P0(0)) / S[0];
+    cs[1] = (P2(0) - P1(0)) / S[1];
+    cs[2] = (P0(0) - P2(0)) / S[2];
+
+    sn[0] = (P1(1) - P0(1)) / S[0];
+    sn[1] = (P2(1) - P1(1)) / S[1];
+    sn[2] = (P0(1) - P2(1)) / S[2];
+
+    B[0] = (PL(0) - P0(0)) * sn[0] - (PL(1) - P0(1)) * cs[0];
+    B[1] = (PL(0) - P1(0)) * sn[1] - (PL(1) - P1(1)) * cs[1];
+    B[2] = (PL(0) - P2(0)) * sn[2] - (PL(1) - P2(1)) * cs[2];
+
+    e[0] = (PL(0) - P0(0)) * (PL(0) - P0(0)) + PL(2) * PL(2);
+    e[1] = (PL(0) - P1(0)) * (PL(0) - P1(0)) + PL(2) * PL(2);
+    e[2] = (PL(0) - P2(0)) * (PL(0) - P2(0)) + PL(2) * PL(2);
+
+    h[0] = (PL(0) - P0(0)) * (PL(1) - P0(1));
+    h[1] = (PL(0) - P1(0)) * (PL(1) - P1(1));
+    h[2] = (PL(0) - P2(0)) * (PL(1) - P2(1));
+
+    Q[0] = log((R[0] + R[1] + S[0]) / (R[0] + R[1] - S[0]));
+    Q[1] = log((R[1] + R[2] + S[1]) / (R[1] + R[2] - S[1]));
+    Q[2] = log((R[2] + R[0] + S[2]) / (R[2] + R[0] - S[2]));
+
+    U[0] = r[1].dot(s[0] / S[0]);
+    U[1] = r[2].dot(s[1] / S[1]);
+    U[2] = r[0].dot(s[2] / S[2]);
+
+    u[0] = r[0].dot(s[0] / S[0]);
+    u[1] = r[1].dot(s[1] / S[1]);
+    u[2] = r[2].dot(s[2] / S[2]);
+
+    Pn[0] = 0.5 * (u[0] * R[0] - U[0] * R[1] + (R[0] * R[0] - u[0] * u[0]) * Q[0]);
+    Pn[1] = 0.5 * (u[1] * R[1] - U[1] * R[2] + (R[1] * R[1] - u[1] * u[1]) * Q[1]);
+    Pn[2] = 0.5 * (u[2] * R[2] - U[2] * R[0] + (R[2] * R[2] - u[2] * u[2]) * Q[2]);
+
+    Real PhiDipConst =
+        -atan((m[0] * e[0] - h[0]) / (PL(2) * R[0])) + atan((m[0] * e[1] - h[1]) / (PL(2) * R[1]))
+        -atan((m[1] * e[1] - h[1]) / (PL(2) * R[1])) + atan((m[1] * e[2] - h[2]) / (PL(2) * R[2]))
+        -atan((m[2] * e[2] - h[2]) / (PL(2) * R[2])) + atan((m[2] * e[0] - h[0]) / (PL(2) * R[0]));
+
+    Real PhiSrcConst = -(B[0] * Q[0] + B[1] * Q[1] + B[2] * Q[2]) - PL(2) * PhiDipConst;
+
+    Real SrcsumX = Pn[0] * sn[0] + Pn[1] * sn[1] + Pn[2] * sn[2];
+    Real SrcsumY = Pn[0] * cs[0] + Pn[1] * cs[1] + Pn[2] * cs[2];
+
+    Real DipsumX = Q[0] * sn[0] + Q[1] * sn[1] + Q[2] * sn[2];
+    Real DipsumY = Q[0] * cs[0] + Q[1] * cs[1] + Q[2] * cs[2];
+
+    // Final constants and results
+    Real DipConst = FourPIinv * PhiDipConst;
+    Real SrcConst = FourPIinv * PhiSrcConst;
+
+    Real DipX = -FourPIinv * (-PL(0) * PhiDipConst + PL(2) * DipsumX);
+    Real DipY = -FourPIinv * (-PL(1) * PhiDipConst - PL(2) * DipsumY);
+    Real SrcX = -FourPIinv * (-PL(0) * PhiSrcConst - SrcsumX);
+    Real SrcY = -FourPIinv * (-PL(1) * PhiSrcConst + SrcsumY);
+
+    Matrix3 Surface_Dist = Matrix3::Ones();
+    Surface_Dist(0,1) = P0(0);    Surface_Dist(0,2) = P0(1);
+    Surface_Dist(1,1) = P1(0);    Surface_Dist(1,2) = P1(1);
+    Surface_Dist(2,1) = P2(0);    Surface_Dist(2,2) = P2(1);
+    Matrix3 Surface_Interp = Surface_Dist.inverse();
+
+    Vector3 sdP1 = Surface_Interp*Vector3(1,0,0);   // Surface distribution for case that node 1 has unit strength
+    Vector3 sdP2 = Surface_Interp*Vector3(0,1,0);   // Surface distribution for case that node 2 has unit strength
+    Vector3 sdP3 = Surface_Interp*Vector3(0,0,1);   // Surface distribution for case that node 3 has unit strength
+
+    Vector3 SVec(SrcConst,SrcX,SrcY);
+    Vector3 DVec(DipConst,DipX,DipY);
+
+    S1 = sdP1.dot(SVec);
+    S2 = sdP2.dot(SVec);
+    S3 = sdP3.dot(SVec);
+    D1 = sdP1.dot(DVec);
+    D2 = sdP2.dot(DVec);
+    D3 = sdP3.dot(DVec);
+}
+
 //-----------------------
 // Flat Source Quad Panel
 //-----------------------

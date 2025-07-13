@@ -46,10 +46,14 @@ protected:
     std::vector<SP_Node>    Panel_Nodes;
     std::vector<SP_Node>    BC_Nodes;
     std::vector<Vector3>    BC_Pos;
-    int NPA=0, NPAux=0, NPTot=0;              // Panel counts
+    int NPA=0, NPAux=0;              // Panel counts
     int NA=0, NB=0, NR=0, NAux=0, NATot=0;
 
     DistType PanelDist = CONSTANT;          // What type of distribution is being used on the panels?
+
+    //--- Solver vars
+    int NPTOT;                      // Total number of panels in the system
+    int NNTOT;                      // Total number of surface points (on which the Green's second identitity is solved)
 
     //--- Solver variables ( these are updated at every timestep)
     Matrix G;                       // Matrices of influence coefficients
@@ -111,6 +115,7 @@ public:
     virtual ~Solver()   {}          // Ideally nothing to clear!
 
     //--- Solver parameter specification
+    virtual void Set_Parameters(std::vector<Parameter> &Params) {}
     virtual void Set_Ints(std::vector<int> &D)          {}
     virtual void Set_Real(Real D)                       {}
     virtual void Set_Reals(std::vector<Real> &D)        {}

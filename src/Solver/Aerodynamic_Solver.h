@@ -58,7 +58,8 @@ protected:
     //--- Problem Setup
     void Create_Panels(Boundary *B);
     void Specify_BC_Nodes();
-    void Prepare_Linear_System();
+    void Prepare_Linear_System_Const();
+    void Prepare_Linear_System_Bilinear();
 
     //--- Problem solution
     void Set_RHS_Vec()               {}
@@ -72,7 +73,8 @@ public:
     // virtual void Set_Ints(std::vector<int> &D)          {}
     // virtual void Set_Real(Real D)                       {}
     // virtual void Set_Reals(std::vector<Real> &D)        {}
-    void Set_Flags(std::vector<bool> &D);
+    void Set_Parameters(std::vector<Parameter> &Params) override;
+    // void Set_Flags(std::vector<bool> &D);
 
     //--- Setup
     void Setup(Boundary *B);

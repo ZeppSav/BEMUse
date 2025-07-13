@@ -6,6 +6,7 @@
 #include <memory>               // Shared ptr.
 
 #define OpenMPfor _Pragma("omp parallel for")
+#define csp << " " <<
 
 #ifdef SinglePrec
 

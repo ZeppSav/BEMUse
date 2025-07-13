@@ -46,7 +46,7 @@ void Hydrodynamic_Radiation_Solver::Create_Panels(Boundary *B)
         if (Geo[i]->Get_N()==4)     Wave_Panels.push_back(std::make_shared<FlatWaveQuadPanel>(GeoRefl[i]));
     }
 
-    NPTot = Source_Panels.size();
+    NPTOT = Source_Panels.size();
 
     // For simplicity I will simply store the source panels, as these are where the BC is calculated
     StdAppend(Panels,Source_Panels);
@@ -57,7 +57,7 @@ void Hydrodynamic_Radiation_Solver::Create_Panels(Boundary *B)
 //    std::cout   << "NSource panels = " <<  Source_Panels.size()
 //                << " NWave Symmetry panels = " << Refl_Source_Panels.size()
 //                << " N Wave panels = " << Wave_Panels.size()
-//                << " NPA = " << NPA << " NPTot = "  << NPTot << std::endl;
+//                << " NPA = " << NPA << " NPTOT = "  << NPTOT << std::endl;
 
 }
 
@@ -65,19 +65,19 @@ void Hydrodynamic_Radiation_Solver::Prepare_Linear_System()
 {
     // Prepare the linear system
 
-    SSrcMat =       CMatrix::Zero(NPTot,NPTot);
-    SSrcReflMat =   CMatrix::Zero(NPTot,NPTot);
-    DSrcMat =       CMatrix::Zero(NPTot,NPTot);
-    DSrcReflMat =   CMatrix::Zero(NPTot,NPTot);
-    ReflNormMat =   CMatrix::Zero(NPTot,1);
+    SSrcMat =       CMatrix::Zero(NPTOT,NPTOT);
+    SSrcReflMat =   CMatrix::Zero(NPTOT,NPTOT);
+    DSrcMat =       CMatrix::Zero(NPTOT,NPTOT);
+    DSrcReflMat =   CMatrix::Zero(NPTOT,NPTOT);
+    ReflNormMat =   CMatrix::Zero(NPTOT,1);
 
     OpenMPfor
-    for (int S=0; S<NPTot; S++){
+    for (int S=0; S<NPTOT; S++){
 
         Vector3 PanNorm = Source_Panels[S]->Centroid()->Z_Axis_Global();
         ReflNormMat(S) = PanNorm(2)*2.0;
 
-        for (int R=0; R<NPTot; R++)
+        for (int R=0; R<NPTOT; R++)
         {
             // Source terms
             Real s,d,sr,dr;
@@ -91,7 +91,7 @@ void Hydrodynamic_Radiation_Solver::Prepare_Linear_System()
         }
     }
 
-//    for (int i=0; i<NPTot; i++) std::cout << SSrcMat(i,i).real() << " " << SSrcMat(i,i).imag() <<" "<< DSrcMat(i,i).real() << " " << DSrcMat(i,i).imag() << std::endl;
+//    for (int i=0; i<NPTOT; i++) std::cout << SSrcMat(i,i).real() << " " << SSrcMat(i,i).imag() <<" "<< DSrcMat(i,i).real() << " " << DSrcMat(i,i).imag() << std::endl;
 
 }
 
@@ -99,9 +99,9 @@ void Hydrodynamic_Radiation_Solver::Set_RHS_Mat()
 {
     // This sets the BC for the problem.
 
-    N_k_Mat = CMatrix::Zero(NPTot,NDOF);    // Reset
+    N_k_Mat = CMatrix::Zero(NPTOT,NDOF);    // Reset
 
-    for (int i=0; i<NPTot; i++)
+    for (int i=0; i<NPTOT; i++)
     {
         Vector3 P = Panel_Nodes[i]->Position_Global();
         Vector3 N = Panel_Nodes[i]->Z_Axis_Global();
@@ -155,15 +155,15 @@ void Hydrodynamic_Radiation_Solver::Prepare_Linear_System_Wave_Terms()
     if (Omega==FreqInf) return;
 
     // Set matrices to zero
-    SWaveMat = CMatrix::Zero(NPTot,NPTot);
-    DWaveMat = CMatrix::Zero(NPTot,NPTot);
+    SWaveMat = CMatrix::Zero(NPTOT,NPTOT);
+    DWaveMat = CMatrix::Zero(NPTOT,NPTOT);
 
     //Set Wavenumber parameter in panels
     for (SP_Panel P : Wave_Panels)      P->k = Kappa;
 
     OpenMPfor
-    for (int S=0; S<NPTot; S++){
-        for (int R=0; R<NPTot; R++)
+    for (int S=0; S<NPTOT; S++){
+        for (int R=0; R<NPTOT; R++)
         {
             CReal ws,wd;
             Wave_Panels[S]->CInf_SingleDoubleLayerQuad(BC_Pos[R],ws,wd);    // Wave term
@@ -545,11 +545,11 @@ void Hydrodynamic_Radiation_Solver::Calc_Phi_Incident(Real &B, Vector3 &P_Glob, 
 void Hydrodynamic_Radiation_Solver::Set_Incident_Potential_Mats()
 {
     // The incident potential & its gradient on the surface must be calculated.
-    Phi_I = CMatrix::Zero(NPTot,NBeta);
-    DPhi_I_DN = CMatrix::Zero(NPTot,NBeta);
+    Phi_I = CMatrix::Zero(NPTOT,NBeta);
+    DPhi_I_DN = CMatrix::Zero(NPTOT,NBeta);
 
     OpenMPfor
-    for (int P=0; P<NPTot; P++){              // Loop panels
+    for (int P=0; P<NPTOT; P++){              // Loop panels
 
         Vector3 Pos = Panel_Nodes[P]->Position_Global();     // Node position
         Vector3 Norm = Panel_Nodes[P]->Z_Axis_Global();            // Norm of the panel

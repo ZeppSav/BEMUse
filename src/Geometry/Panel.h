@@ -1,6 +1,8 @@
 /****************************************************************************
     Panel Class
-    Copyright (C) 2021 Joseph Saverin j.saverin@tu-berlin.de
+    Copyright (C) 2021-
+    Joseph Saverin j.saverin@tu-berlin.de
+    Ronja Baumeister r.baumeister@campus.tu-berlin.de
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,22 +47,28 @@ public:
     PanelClass()     {}
     PanelClass(SP_Geo G)     {Geo=G;}
 
-    //--- Influence
+    //--- Influence constant strength
     virtual Real    Inf_SingleLayer(const Vector3 &P)       {}
     virtual Real    Inf_DoubleLayer(const Vector3 &P)       {}
     virtual void    Inf_SingleDoubleLayer(const Vector3 &P, Real &S, Real &D)   {}
-
-    virtual Real    Inf_SingleLayerQuad(const Vector3 &P)   {}
-    virtual Real    Inf_DoubleLayerQuad(const Vector3 &P)   {}
-    virtual void    Inf_SingleDoubleLayerQuad(const Vector3 &P, Real &S, Real &D)   {}
 
     virtual CReal   CInf_SingleLayer(const Vector3 &P)      {}
     virtual CReal   CInf_DoubleLayer(const Vector3 &P)      {}
     virtual void    CInf_SingleDoubleLayer(const Vector3 &P, CReal &S, CReal &D)   {}
 
+    //--- Influence Gaussian quadrature
+    virtual Real    Inf_SingleLayerQuad(const Vector3 &P)   {}
+    virtual Real    Inf_DoubleLayerQuad(const Vector3 &P)   {}
+    virtual void    Inf_SingleDoubleLayerQuad(const Vector3 &P, Real &S, Real &D)   {}
+
     virtual CReal   CInf_SingleLayerQuad(const Vector3 &P)  {}
     virtual CReal   CInf_DoubleLayerQuad(const Vector3 &P)  {}
     virtual void    CInf_SingleDoubleLayerQuad(const Vector3 &P, CReal &S, CReal &D)   {}
+
+    //--- Influence non-constant strength
+    virtual void Inf_SingleLayer_LinDist(const Vector3 &P, Real &S1, Real &S2, Real &S3) {}
+    virtual void Inf_DoubleLayer_LinDist(const Vector3 &P, Real &D1, Real &D2, Real &D3) {}
+    virtual void Inf_SingleDoubleLayer_LinDist(const Vector3 &P, Real &S1, Real &S2, Real &S3, Real &D1, Real &D2, Real &D3) {}
 
     //--- Getters
     SP_Node Centroid()  {return Geo->Centroid;}
@@ -124,14 +132,19 @@ public:
     //--- Constructors
     FlatSourceTriPanel(SP_Geo G) : FlatTriPanel(G) {}
 
-    //--- Influence
-    Real Inf_SingleLayer(const Vector3 &P)      {Real S,D; Inf_SourceKernel(P,S,D); return S;}
-    Real Inf_DoubleLayer(const Vector3 &P)      {Real S,D; Inf_SourceKernel(P,S,D); return D;}
-    void Inf_SingleDoubleLayer(const Vector3 &P, Real &S, Real &D) {Inf_SourceKernel(P,S,D);}
+    //--- Influence constant strength panels
+    Real Inf_SingleLayer(const Vector3 &P)   override   {Real S,D; Inf_SourceKernel(P,S,D); return S;}
+    Real Inf_DoubleLayer(const Vector3 &P)   override   {Real S,D; Inf_SourceKernel(P,S,D); return D;}
+    void Inf_SingleDoubleLayer(const Vector3 &P, Real &S, Real &D) override {Inf_SourceKernel(P,S,D);}
 
-    Real Inf_SingleLayerQuad(const Vector3 &P)  {Real S,D; Inf_SingleDoubleLayerQuad(P,S,D); return S;}
-    Real Inf_DoubleLayerQuad(const Vector3 &P)  {Real S,D; Inf_SingleDoubleLayerQuad(P,S,D); return D;}
-    void Inf_SingleDoubleLayerQuad(const Vector3 &P, Real &S, Real &D);
+    Real Inf_SingleLayerQuad(const Vector3 &P) override {Real S,D; Inf_SingleDoubleLayerQuad(P,S,D); return S;}
+    Real Inf_DoubleLayerQuad(const Vector3 &P) override {Real S,D; Inf_SingleDoubleLayerQuad(P,S,D); return D;}
+    void Inf_SingleDoubleLayerQuad(const Vector3 &P, Real &S, Real &D) override;
+
+    //--- Influence linear strength panels
+    void Inf_SingleLayer_LinDist(const Vector3 &P, Real &S1, Real &S2, Real &S3) override;
+    void Inf_DoubleLayer_LinDist(const Vector3 &P, Real &D1, Real &D2, Real &D3) override;
+    void Inf_SingleDoubleLayer_LinDist(const Vector3 &P, Real &S1, Real &S2, Real &S3, Real &D1, Real &D2, Real &D3) override;
 };
 
 class FlatSourceQuadPanel : public FlatQuadPanel

@@ -15,7 +15,7 @@ void Solver::Specify_BC_Const_Pans(Boundary *B)
 
     Real F = 1e-5;     // Displacement factor
 
-    for (int i=0; i<NPTot; i++){
+    for (int i=0; i<NPTOT; i++){
         SP_Node C = Body_Panels[i]->Get_Geo()->Centroid;
         Vector3 P = C->Position_Global();
         Vector3 Z = C->Z_Axis_Global();
@@ -26,7 +26,7 @@ void Solver::Specify_BC_Const_Pans(Boundary *B)
         BC_Pos.push_back(BCP);
     }
 
-    BC = Matrix::Zero(NPTot,1);
+    BC = Matrix::Zero(NPTOT,1);
 }
 
 void Solver::Specify_BC_Const_Prev(Boundary *B)
@@ -36,7 +36,7 @@ void Solver::Specify_BC_Const_Prev(Boundary *B)
 
     Real F = 1e-5;     // Displacement factor
 
-    for (int i=0; i<NPTot; i++){
+    for (int i=0; i<NPTOT; i++){
         SP_Node C = Panels[i]->Get_Geo()->Centroid;
         Vector3 P = C->Position_Global();
         Vector3 Z = C->Z_Axis_Global();
@@ -47,7 +47,7 @@ void Solver::Specify_BC_Const_Prev(Boundary *B)
         BC_Pos.push_back(BCP);
     }
 
-    // BC = Matrix::Zero(NPTot,1);
+    // BC = Matrix::Zero(NPTOT,1);
 }
 
 void Solver::Specify_BC_Linear_Pans(Boundary *B)
@@ -56,15 +56,16 @@ void Solver::Specify_BC_Linear_Pans(Boundary *B)
 
     Real F = 1e-5;     // Displacement factor
 
-    for (int i=0; i<NPTot; i++){
-        Vector3 P = Body_Panels[i]->Get_Geo()->Centroid->Position_Global();
-        Vector3 Z = Body_Panels[i]->Get_Geo()->Centroid->Z_Axis_Global();
-        Real L = Panels[i]->Get_Geo()->Get_Lmax();
+    for (int i=0; i<NNTOT; i++){
+        Vector3 P = Body_Nodes[i]->Position_Global();
+        Vector3 Z = Body_Nodes[i]->Z_Axis_Global();
+        // Real L = Panels[i]->Get_Geo()->Get_Lmax();
         Vector3 BCP = P+F*Z;
         BC_Pos.push_back(BCP);
+        BC_Nodes.push_back(Body_Nodes[i]);
     }
 
-    BC = Matrix::Zero(NPTot,1);
+    BC = Matrix::Zero(NNTOT,1);
 }
 
 }
