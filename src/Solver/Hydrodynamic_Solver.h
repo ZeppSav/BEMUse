@@ -40,7 +40,7 @@ class Hydrodynamic_Radiation_Solver : public Solver
     CMatrix ReflNormMat;                        // Normal of the reflected matrix
     CMatrix N_k_Mat, DPhi_J_DN;     // RHS vector which contains the Boundary conditions for the radiation problem
     CMatrix VisMat;
-    Matrix PanArea;                             // Area of panels
+    Matrix PanArea, PanAreaMatrix, PanAreaMatrixLong;   // Area of panels
 
     //--- Kochin functions
     CMatrix KochinRad, KochinDiff;
@@ -68,7 +68,8 @@ class Hydrodynamic_Radiation_Solver : public Solver
     CMatrix KochinPiE, KochinPidEdn;            // Kochin terms const pi
 
     //--- Panels
-    std::vector<SP_Panel> Source_Panels, Refl_Source_Panels, Wave_Panels;
+    // std::vector<SP_Panel> Source_Panels, Refl_Source_Panels, Wave_Panels;
+    std::vector<SP_Panel>   Refl_Body_Panels;    // Reflected panels on the submerged body
     std::vector<SP_Geo> FS_Geo;
 
     //--- Problem Setup
@@ -102,7 +103,7 @@ class Hydrodynamic_Radiation_Solver : public Solver
     WATER_DEPTH Depth = Infinite;
     Real H = 10000;             // Water depth
     int t_DOF, NDOF = 6;        // Which degree of free is oscillating now?
-    StdVector Frequency_List;
+    // StdVector Frequency_List;
     bool IFR = false;
     Real Rho = Rho_wat;         // Density of fluid
     Real Grav = Gravity;        // Density of fluid
@@ -137,11 +138,12 @@ public:
     void Setup(Boundary *B);
 
     //--- Solver parameter specification
-    void Set_Flags(std::vector<bool> &D)        {IFR = D[0];}
+    void Set_Parameters(std::vector<Parameter> &Params) override;
+    // void Set_Flags(std::vector<bool> &D)        {IFR = D[0];}
     void Set_Real(Real  D)                      {Frequency = D;}
-    void Set_Reals(std::vector<Real> &D)        {StdAppend(BetaArray,D);}
-    void Set_Ints(std::vector<int> &D)          {NKoch = D[0];}
-    void Set_Environment(std::vector<Real> &D)  {Rho = D[0]; Grav = D[1];}
+    // void Set_Reals(std::vector<Real> &D)        {StdAppend(BetaArray,D);}
+    // void Set_Ints(std::vector<int> &D)          {NKoch = D[0];}
+    // void Set_Environment(std::vector<Real> &D)  {Rho = D[0]; Grav = D[1];}
 
     //--- Solution
     void Solve();

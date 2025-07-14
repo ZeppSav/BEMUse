@@ -42,7 +42,7 @@ class Solver
 protected:
 
     //--- Solver vars
-    std::vector<SP_Panel>   Panels, Panels_Aux;
+    // std::vector<SP_Panel>   Panels, Panels_Aux;
     std::vector<SP_Node>    Panel_Nodes;
     std::vector<SP_Node>    BC_Nodes;
     std::vector<Vector3>    BC_Pos;
@@ -101,6 +101,7 @@ protected:
     void Specify_BC_Const_Pans(Boundary *B);
     void Specify_BC_Const_Prev(Boundary *B);
     void Specify_BC_Linear_Pans(Boundary *B);
+    virtual void Specify_BC_Positions();
 
     //--- Output files
     std::string OutputDirectory = "Output";
@@ -116,11 +117,7 @@ public:
 
     //--- Solver parameter specification
     virtual void Set_Parameters(std::vector<Parameter> &Params) {}
-    virtual void Set_Ints(std::vector<int> &D)          {}
-    virtual void Set_Real(Real D)                       {}
-    virtual void Set_Reals(std::vector<Real> &D)        {}
-    virtual void Set_Flags(std::vector<bool> &D)        {}
-    virtual void Set_Environment(std::vector<Real> &D)  {}
+    virtual void Set_Real(Real D)                               {}
     virtual void Set_OutputFilePath(std::string &D)     {OutputPath = OutputDirectory + "/" + D;}
 
     //--- Setup

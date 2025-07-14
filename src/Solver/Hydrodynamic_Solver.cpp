@@ -7,6 +7,25 @@
 namespace BEMUse
 {
 
+//--- Solver parameter specification
+void Hydrodynamic_Radiation_Solver::Set_Parameters(std::vector<Parameter> &Params)
+{
+    // Parameters for the solver are specified here
+
+    for (Parameter P : Params)
+    {
+        if (P.myNameis("IFR"))              IFR = P.Get_Param<bool>();                  // Irregular frequency removal
+        if (P.myNameis("WaveAngle"))        BetaArray.push_back(P.Get_Param<Real>());   // Individual wave angle
+        if (P.myNameis("NKochin"))          NKoch = P.Get_Param<int>();                 // Discretisation for Kochin function evaluation
+        if (P.myNameis("Density"))          Rho = P.Get_Param<Real>();                  // Density of fluid
+        if (P.myNameis("Gravity"))          Grav = P.Get_Param<Real>();                 // Acceleration due to gravity
+    }
+
+    // Hard-coded parameters
+    PanelDist = CONSTANT;
+    NBeta = BetaArray.size();
+}
+
 //--- Problem setup
 void Hydrodynamic_Radiation_Solver::Create_Panels(Boundary *B)
 {
@@ -21,7 +40,7 @@ void Hydrodynamic_Radiation_Solver::Create_Panels(Boundary *B)
     B->Get_Elements(Geo);
     B->Get_Symm_Elements(GeoRefl);
     B->Get_FreeSurface_Elements(FS_Geo);
-    NPA = Geo.size();               // Set number of geometry surface panels here
+    NPA = Geo.size();               // Number of panels on submerged body
 
     //--- Are we carrying out irregular freqency removal? Then include also the auxiliary panels & reflected auxiliary panels
     if (IFR)
@@ -36,27 +55,27 @@ void Hydrodynamic_Radiation_Solver::Create_Panels(Boundary *B)
     }
 
     for (int i=0; i<Geo.size(); i++){
-        if (Geo[i]->Get_N()==3)     Source_Panels.push_back(std::make_shared<FlatSourceTriPanel>(Geo[i]));
-        if (Geo[i]->Get_N()==4)     Source_Panels.push_back(std::make_shared<FlatSourceQuadPanel>(Geo[i]));
+        if (Geo[i]->Get_N()==3)     Body_Panels.push_back(std::make_shared<FlatSourceTriPanel>(Geo[i]));
+        if (Geo[i]->Get_N()==4)     Body_Panels.push_back(std::make_shared<FlatSourceQuadPanel>(Geo[i]));
 
-        if (Geo[i]->Get_N()==3)     Refl_Source_Panels.push_back(std::make_shared<FlatSourceTriPanel>(GeoRefl[i]));
-        if (Geo[i]->Get_N()==4)     Refl_Source_Panels.push_back(std::make_shared<FlatSourceQuadPanel>(GeoRefl[i]));
+        if (Geo[i]->Get_N()==3)     Refl_Body_Panels.push_back(std::make_shared<FlatSourceTriPanel>(GeoRefl[i]));
+        if (Geo[i]->Get_N()==4)     Refl_Body_Panels.push_back(std::make_shared<FlatSourceQuadPanel>(GeoRefl[i]));
 
-        if (Geo[i]->Get_N()==3)     Wave_Panels.push_back(std::make_shared<FlatWaveTriPanel>(GeoRefl[i]));
-        if (Geo[i]->Get_N()==4)     Wave_Panels.push_back(std::make_shared<FlatWaveQuadPanel>(GeoRefl[i]));
+        if (Geo[i]->Get_N()==3)     FS_Panels.push_back(std::make_shared<FlatWaveTriPanel>(GeoRefl[i]));
+        if (Geo[i]->Get_N()==4)     FS_Panels.push_back(std::make_shared<FlatWaveQuadPanel>(GeoRefl[i]));
     }
 
-    NPTOT = Source_Panels.size();
+    NPTOT = Body_Panels.size();     // Number of panels on full system
 
     // For simplicity I will simply store the source panels, as these are where the BC is calculated
-    StdAppend(Panels,Source_Panels);
+    // StdAppend(Panels,Body_Panels);
 
     // Now specify panel nodes (for BC later)
-    for (SP_Panel P : Panels)   Panel_Nodes.push_back(P->Get_Geo()->Centroid);
+    for (SP_Panel P : Body_Panels)   Panel_Nodes.push_back(P->Get_Geo()->Centroid);
 
-//    std::cout   << "NSource panels = " <<  Source_Panels.size()
-//                << " NWave Symmetry panels = " << Refl_Source_Panels.size()
-//                << " N Wave panels = " << Wave_Panels.size()
+//    std::cout   << "NSource panels = " <<  Body_Panels.size()
+//                << " NWave Symmetry panels = " << Refl_Body_Panels.size()
+//                << " N Wave panels = " << FS_Panels.size()
 //                << " NPA = " << NPA << " NPTOT = "  << NPTOT << std::endl;
 
 }
@@ -74,15 +93,15 @@ void Hydrodynamic_Radiation_Solver::Prepare_Linear_System()
     OpenMPfor
     for (int S=0; S<NPTOT; S++){
 
-        Vector3 PanNorm = Source_Panels[S]->Centroid()->Z_Axis_Global();
+        Vector3 PanNorm = Body_Panels[S]->Centroid()->Z_Axis_Global();
         ReflNormMat(S) = PanNorm(2)*2.0;
 
         for (int R=0; R<NPTOT; R++)
         {
             // Source terms
             Real s,d,sr,dr;
-            Source_Panels[S]->Inf_SingleDoubleLayer(BC_Pos[R],s,d);         // Rankine source
-            Refl_Source_Panels[S]->Inf_SingleDoubleLayer(BC_Pos[R],sr,dr);  // Reflected rankine source
+            Body_Panels[S]->Inf_SingleDoubleLayer(BC_Pos[R],s,d);         // Rankine source
+            Refl_Body_Panels[S]->Inf_SingleDoubleLayer(BC_Pos[R],sr,dr);  // Reflected rankine source
 
             SSrcMat(R,S) = CReal(-s,0);
             SSrcReflMat(R,S) = CReal(-sr,0);
@@ -124,7 +143,8 @@ void Hydrodynamic_Radiation_Solver::Prepare_PostProcessing_Mats()
     // This is done here to improve overview of the code
 
     AddedMassMat = CMatrix::Zero(NDOF,NPA);
-    PanArea = Matrix::Zero(NPA,1);
+    PanArea = Matrix::Zero(NPA,1);          // Panel areas only on submerged body
+    Matrix PanAreaLong = Matrix::Zero(NPTOT,1);      // Panel areas on submerged body + interior FS (in case of IFR)
 
     OpenMPfor
     for (int i=0; i<NPA; i++)
@@ -132,9 +152,10 @@ void Hydrodynamic_Radiation_Solver::Prepare_PostProcessing_Mats()
         Vector3 P = Panel_Nodes[i]->Position_Global();
         Vector3 N = Panel_Nodes[i]->Z_Axis_Global();
         Vector3 PCN = P.cross(N);
-        Real dS = Panels[i]->Get_Geo()->Area;
+        Real dS = Body_Panels[i]->Get_Geo()->Area;
 
         PanArea(i) = dS;
+        PanAreaLong(i) = dS;
         AddedMassMat(0,i) = N(0)*dS;
         AddedMassMat(1,i) = N(1)*dS;
         AddedMassMat(2,i) = N(2)*dS;
@@ -143,6 +164,14 @@ void Hydrodynamic_Radiation_Solver::Prepare_PostProcessing_Mats()
         AddedMassMat(5,i) = PCN(2)*dS;
     }
 
+    // Specify panel area matrix- This needs to be the size of the tota number of panels, not just the
+    // panels on the submerged body (e.g. for when IFR is activated).
+
+    for (int i=NPA; i<NPTOT; i++) PanAreaLong(i) = Body_Panels[i]->Get_Geo()->Area;
+
+    // Now replicate these matrices as they will later multiply with the incoming wave angle
+    PanAreaMatrix = PanArea.replicate(1,NBeta);
+    PanAreaMatrixLong = PanAreaLong.replicate(1,NBeta);
 }
 
 void Hydrodynamic_Radiation_Solver::Prepare_Linear_System_Wave_Terms()
@@ -159,14 +188,14 @@ void Hydrodynamic_Radiation_Solver::Prepare_Linear_System_Wave_Terms()
     DWaveMat = CMatrix::Zero(NPTOT,NPTOT);
 
     //Set Wavenumber parameter in panels
-    for (SP_Panel P : Wave_Panels)      P->k = Kappa;
+    for (SP_Panel P : FS_Panels)      P->k = Kappa;
 
     OpenMPfor
     for (int S=0; S<NPTOT; S++){
         for (int R=0; R<NPTOT; R++)
         {
             CReal ws,wd;
-            Wave_Panels[S]->CInf_SingleDoubleLayerQuad(BC_Pos[R],ws,wd);    // Wave term
+            FS_Panels[S]->CInf_SingleDoubleLayerQuad(BC_Pos[R],ws,wd);    // Wave term
             SWaveMat(R,S) = -ws;
             DWaveMat(R,S) = wd + SSrcReflMat(R,S)*ReflNormMat(S)*Kappa;
         }
@@ -198,8 +227,8 @@ void Hydrodynamic_Radiation_Solver::Prepare_FS_Linear_System(Boundary *B)
         {
             // Source terms
             Real s,d,sr,dr;
-            Source_Panels[S]->Inf_SingleDoubleLayer(WaveNodePos[R],s,d);         // Rankine source
-            Refl_Source_Panels[S]->Inf_SingleDoubleLayer(WaveNodePos[R],sr,dr);  // Reflected rankine source
+            Body_Panels[S]->Inf_SingleDoubleLayer(WaveNodePos[R],s,d);         // Rankine source
+            Refl_Body_Panels[S]->Inf_SingleDoubleLayer(WaveNodePos[R],sr,dr);  // Reflected rankine source
             SMatExt(R,S) = CReal(-s,0);
             SMatReflExt(R,S) = CReal(-sr,0);
             DMatExt(R,S) = CReal(d,0);
@@ -229,7 +258,7 @@ void Hydrodynamic_Radiation_Solver::Prepare_FS_Linear_System_Wave_Terms()
         for (int R=0; R<NWN; R++)
         {
             CReal ws,wd;
-            Wave_Panels[S]->CInf_SingleDoubleLayerQuad(WaveNodePos[R],ws,wd);    // Wave term
+            FS_Panels[S]->CInf_SingleDoubleLayerQuad(WaveNodePos[R],ws,wd);    // Wave term
             SWaveMatExt(R,S) = -ws;
             DWaveMatExt(R,S) = wd + SMatReflExt(R,S)*ReflNormMat(S)*Kappa;
         }
@@ -241,7 +270,8 @@ void Hydrodynamic_Radiation_Solver::Setup(Boundary *B)
 {
     // Prepare system
     Create_Panels(B);
-    Specify_BC_Const_Prev(B);
+    for (int i=0; i<NPTOT; i++) BC_Nodes.push_back(Body_Panels[i]->Get_Geo()->Centroid);        // Enfore constant strength panels!
+    Specify_BC_Positions();
     Prepare_Linear_System();
 
     // Prepare matrices for post processing
@@ -252,7 +282,6 @@ void Hydrodynamic_Radiation_Solver::Setup(Boundary *B)
     Prepare_FS_Linear_System(B);
 
     // Specify storage arrays
-    NBeta = BetaArray.size();
     FK_i = CMatrix::Zero(NDOF,NBeta);
     F_i = CMatrix::Zero(NDOF,NBeta);
     RAO_i = CMatrix::Zero(NDOF,NBeta);
@@ -413,8 +442,9 @@ void Hydrodynamic_Radiation_Solver::Solve()
 
     //--- Calc diffraction solution (one solution per incoming wave angle Beta)
     Set_Incident_Potential_Mats();
-    CMatrix RHSDiff = SMat*(-DPhi_I_DN.cwiseProduct(PanArea));
+    CMatrix RHSDiff = SMat*(-DPhi_I_DN.cwiseProduct(PanAreaMatrixLong));
     CMatrix Phi_S = PPLU.solve(RHSDiff);
+
 //    CMatrix Phi_S = CG.solve(RHSDiff);
 //    CMatrix Phi_S = DGMRES.solve(RHSDiff);
 //    CMatrix Phi_S = GMRES.solve(RHSDiff);
@@ -440,7 +470,7 @@ void Hydrodynamic_Radiation_Solver::Solve()
 
     // Excitation forces
     CMatrix F1 = AddedMassMat*Phi_I;
-    CMatrix F2 = Phi_J.transpose()*(DPhi_I_DN.cwiseProduct(PanArea));
+    CMatrix F2 = Phi_J.transpose()*(DPhi_I_DN.cwiseProduct(PanAreaMatrix));
     FK_i = -Im*Omega*F1;                // Froude-Krylov forces
     SC_i =  Im*Omega*F2;                // Scattering forces
     CMatrix FSup = FK_i + SC_i;

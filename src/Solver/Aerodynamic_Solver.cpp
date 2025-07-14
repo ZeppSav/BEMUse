@@ -11,7 +11,7 @@ namespace BEMUse
 
 void Aerodynamic_Solver::Set_Parameters(std::vector<Parameter> &Params)
 {
-    // This sets the parameters for the solver
+    // Parameters for the solver are specified here
 
     for (Parameter P : Params)
     {
@@ -129,8 +129,9 @@ void Aerodynamic_Solver::Setup(Boundary *B)
     Create_Panels(B);
 
     // Specify parameters for Boundary conditions
-    if (PanelDist==CONSTANT)    Specify_BC_Const_Pans(B);
-    if (PanelDist==BILINEAR)    Specify_BC_Linear_Pans(B);
+    if (PanelDist==CONSTANT)  {for (size_t i=0; i<NPTOT; i++) BC_Nodes.push_back(Body_Panels[i]->Get_Geo()->Centroid);}
+    if (PanelDist==BILINEAR)  {StdAppend(BC_Nodes,Body_Nodes);}
+    Specify_BC_Positions();
 
     // Prepare Linear System
     if (PanelDist==CONSTANT)    Prepare_Linear_System_Const();

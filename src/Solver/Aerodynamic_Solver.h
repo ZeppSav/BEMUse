@@ -70,11 +70,7 @@ public:
     Aerodynamic_Solver() {}
 
     //--- Solver parameter specification
-    // virtual void Set_Ints(std::vector<int> &D)          {}
-    // virtual void Set_Real(Real D)                       {}
-    // virtual void Set_Reals(std::vector<Real> &D)        {}
     void Set_Parameters(std::vector<Parameter> &Params) override;
-    // void Set_Flags(std::vector<bool> &D);
 
     //--- Setup
     void Setup(Boundary *B);

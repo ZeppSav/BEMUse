@@ -53,20 +53,18 @@ public:
 
     //--- Geometry specification
 //    void Set_Origin(Vector3 &O)                     {Origin = O;}
-//    void Set_Flags(std::vector<bool> &D)            {}
 //    void Set_Nodes(StateVector &D)                  {for (Vector V : D) Perimeter.push_back(Vector3(V(0),V(1),V(2)));}
 
     //--- Geometry functions
-    void Generate_Nodes();
-    void Generate_Elements();
-    void Generate_Aux_Nodes();
-    void Generate_Aux_Elements();
-    void Generate_FreeSurface_Nodes();
-    void Generate_FreeSurface_Elements();
+    void Generate_Nodes()                   override;
+    void Generate_Elements()                override;
+    void Generate_Aux_Nodes()               override;
+    void Generate_Aux_Elements()            override;
+    void Generate_FreeSurface_Nodes()       override;
+    void Generate_FreeSurface_Elements()    override;
 
-    int Node_ID(int A, int Z);
-    int Aux_Node_ID(int A, int Z)       {}
-    int Ext_Node_ID(int A, int Z);
+    int Node_ID(int A, int Z)               override;
+    int Ext_Node_ID(int A, int Z)           override;
 };
 
 class Half_Cylinder : public Volume_of_Revolution

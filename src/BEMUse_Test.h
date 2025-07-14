@@ -45,7 +45,7 @@ protected:
     // Geometry
     BEMUse::Boundary *Geometry = nullptr;
     std::vector<BEMUse::SP_Node> BC_Nodes;
-    std::vector<bool> SolverFlags = {true, true, true, true};   // Assume all surfaces are being generated
+    // std::vector<bool> SolverFlags = {true, true, true, true};   // Assume all surfaces are being generated
     BEMUse::Surface *BodySurface = nullptr;
     BEMUse::Surface *WallSurface = nullptr;
     BEMUse::Surface *SeaBedSurface = nullptr;
@@ -87,7 +87,7 @@ public:
 
         // Set up solver
         Solver = new BEMUse::Aerodynamic_Solver();
-        Solver->Set_Flags(SolverFlags);
+        // Solver->Set_Flags(SolverFlags);
         Solver->Setup(Geometry);
 
         // // Extract out surfaces and BC nodes
@@ -121,7 +121,7 @@ public:
     //--- Constructor
     Ellipsoid_Test(std::vector<BEMUse::Parameter> &P) : BEMUse_Test(P) {
         Geometry = new BEMUse::Ellipsoid();
-        SolverFlags =  {true,false,false,false};    // ONLY Ellipsoid is generated in this test case
+        // SolverFlags =  {true,false,false,false};    // ONLY Ellipsoid is generated in this test case
         for (BEMUse::Parameter P : Params)
         {
             if (P.myNameis("Uinf_x"))   Uinf(0) = P.Get_Param<Real>();

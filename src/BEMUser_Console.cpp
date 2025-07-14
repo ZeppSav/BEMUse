@@ -125,17 +125,6 @@ void BEMUse_Console::Specify_Geometry(int argc, char *argv[])
     }
     Flagfile.close();
 
-    // Specify boundary values
-    // if (!Flags.empty())     Boundary->Set_Flags(Flags);
-
-    // if (!Dim.empty())       Boundary->Set_Dimensions(Dim);
-    // if (!DimAux.empty())    Boundary->Set_Auxiliary_Dimensions(DimAux);
-    // if (!DimExt.empty())    Boundary->Set_External_Dimensions(DimExt);
-
-    // if (!Disc.empty())      Boundary->Set_Discretisation(Disc);
-    // if (!DiscAux.empty())   Boundary->Set_Auxiliary_Discretisation(DiscAux);
-    // if (!DiscExt.empty())   Boundary->Set_External_Discretisation(DiscExt);
-
     //--- Generate geometry
     Boundary->Setup();
 }
@@ -180,6 +169,7 @@ void BEMUse_Console::Specify_Solver(int argc, char *argv[])
 
     std::string FilePath;
     std::string line;
+    std::vector<BEMUse::Parameter> Params;
 
     // Specify frequency list. These are read in from a file named "Frequencies.bemin"
     FilePath = std::string("Input") + '/' + std::string("Frequencies.bemin");
@@ -203,14 +193,12 @@ void BEMUse_Console::Specify_Solver(int argc, char *argv[])
         while ( std::getline(WAfile,line) )
         {
             std::vector<std::string> Fields = Split(line,' ');              // Split line into segments
-            WaveAngles.push_back(std::stod(Fields[0])*D2R);
+            Params.push_back(BEMUse::Parameter("WaveAngle",Real(std::stod(Fields[0])*D2R)));
         }
     }
     WAfile.close();
 
     // Specify compiler flags. These are read in from a file named "SolverParams.bemin"
-    std::vector<bool> SolverFlags;
-    std::vector<int> SolverInts;
     std::vector<Real> EnvVars;
     FilePath = std::string("Input") + '/' + std::string("SolverParams.bemin");
     std::ifstream SPfile;
@@ -220,21 +208,17 @@ void BEMUse_Console::Specify_Solver(int argc, char *argv[])
         while ( std::getline(SPfile,line) )
         {
             std::vector<std::string> Fields = Split(line,' ');              // Split line into segments
-//            std::vector<std::string> Fields0 = Split(line,' ');              // Split line into segments
-//            std::string DummyLine;
-//            for (int i=0; i<Fields0.size(); i++)    DummyLine.append(Fields0[i]);
-//            std::vector<std::string> Fields = Split(line,'\t');
             if (Fields[1] == "Irregular"){
-                if (Fields[0] == "TRUE")    SolverFlags.push_back(true);
-                else                        SolverFlags.push_back(false);
+                if (Fields[0] == "TRUE")    Params.push_back(BEMUse::Parameter("IFR",true));
             }
             if (Fields[1] == "Depth"){
                 if (Fields[0] == "INF")     {}// Do nothing (Automatically set to inifite depth)}
                 else                        std::cout << "BEMUse is not yet configured for finite depth problems. Analysis shall continue assuming infinite depth.\n";
             }
-            if (Fields[1] == "Kochin")      SolverInts.push_back(std::stoi(Fields[0]));
-            if (Fields[1] == "Density")     EnvVars.push_back(std::stod(Fields[0]));
-            if (Fields[1] == "Acceleration")EnvVars.push_back(std::stod(Fields[0]));
+            if (Fields[1] == "Kochin")          Params.push_back(BEMUse::Parameter("NKochin",std::stoi(Fields[0])));
+            if (Fields[1] == "Density")         Params.push_back(BEMUse::Parameter("Density",std::stoi(Fields[0])));
+            if (Fields[1] == "Acceleration")    Params.push_back(BEMUse::Parameter("Gravity",Real(std::stod(Fields[0]))));
+
         }
     }
     SPfile.close();
@@ -243,11 +227,7 @@ void BEMUse_Console::Specify_Solver(int argc, char *argv[])
     Solver = new BEMUse::Hydrodynamic_Radiation_Solver();
 
     //--- Set solver parameters
-    Solver->Set_Flags(SolverFlags);
-    Solver->Set_Reals(WaveAngles);
-    Solver->Set_Ints(SolverInts);
-    Solver->Set_Environment(EnvVars);
-
+    Solver->Set_Parameters(Params);
     std::string OutputPath = argv[2];
     Solver->Set_OutputFilePath(OutputPath);
 

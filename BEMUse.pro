@@ -129,4 +129,4 @@ FORMS    += src_gui/bemuser_interface.ui \
 
 # DEFINES += BEMUse_Testing
 
-HEADERS  += src/BEMUse_Test.h \
+# HEADERS  += src/BEMUse_Test.h \

@@ -48,33 +48,23 @@ protected:
     void SetProfiles();
 
     //--- Node access
-    int Node_ID(int A, int Z)           {return A + (NC+1)*Z;}
-    int Aux_Node_ID(int A, int Z)       {}
-    int Ext_Node_ID(int A, int Z)       {}
+    int Node_ID(int A, int Z)        override   {return A + (NC+1)*Z;}
 
 public:
 
     //--- Constructor
     Wing()      {}
 
-    //--- Geometry generation
-    void Generate_Nodes();
-    void Generate_Elements();
-    void Generate_Aux_Nodes()       {}
-    void Generate_Aux_Elements()    {}
-    void Generate_FreeSurface_Nodes()       {}
-    void Generate_FreeSurface_Elements()    {}
-
     //--- Geometry specification
-    // void Set_Discretisation(std::vector<int> &D)            {NS = D[0]; NC = D[1];}
-    // void Set_Auxiliary_Discretisation(std::vector<int> &D)  {}
-    // void Set_External_Discretisation(std::vector<int> &D)   {}
+    void Set_Parameters(std::vector<Parameter> &Params) override;      // Must be configured!
 
-    // void Set_Dimensions(std::vector<Real> &D)               {Span = D[0]; C = D[1];}
-    // void Set_Auxiliary_Dimensions(std::vector<Real> &D)     {}
-    // void Set_External_Dimensions(std::vector<Real> &D)      {}
-
-    void Set_Flags(std::vector<bool> &D)                    {Cosine = D[0];}
+    //--- Geometry generation
+    void Generate_Nodes()       override;
+    void Generate_Elements()    override;
+    // void Generate_Aux_Nodes()       {}
+    // void Generate_Aux_Elements()    {}
+    // void Generate_FreeSurface_Nodes()       {}
+    // void Generate_FreeSurface_Elements()    {}
 };
 
 }

@@ -29,12 +29,11 @@ void Solver_Setup::on_Conf_Solver_clicked()
     // These are passed to the generated solver object and this is then passed to the main window.
     // The task of the configure configure window is then complete!
 
-    //--- Integer flags
-    std::vector<int> SimInts;
+    //--- Sim parameters
+    std::vector<BEMUse::Parameter> Params;
 
     //--- Sim flags
-    std::vector<bool> SimFlags;
-    SimFlags.push_back(ui->IRFToggle->isChecked());
+    if (ui->IRFToggle->isChecked())     Params.push_back(BEMUse::Parameter("IFR",true));
 
     //--- Frequency list
     Real F1 = ui->FLowSet->value();
@@ -59,29 +58,25 @@ void Solver_Setup::on_Conf_Solver_clicked()
     else    {
         for (int i=0; i<BD; i++)    Betas.push_back(B1 + (B2-B1)*i/(BD-1));
     }
-
     for (int i=0; i<Betas.size(); i++) Betas[i] *= D2R;        // Convert
+    for (int i=0; i<Betas.size(); i++) {Params.push_back(BEMUse::Parameter("WaveAngle",Real(Betas[i])));}
+
 
     //--- Kochin angles
-    SimInts.push_back(ui->KochinDiscSet->value());
+    Params.push_back(BEMUse::Parameter("NKochin",ui->KochinDiscSet->value()));
 
     //--- Environmental variables
-    StdVector EnvVars;
-    EnvVars.push_back(ui->DensitySpin->value());
-    EnvVars.push_back(ui->GravitySpin->value());
+    Params.push_back(BEMUse::Parameter("Density",Real(ui->DensitySpin->value())));
+    Params.push_back(BEMUse::Parameter("Gravity",Real(ui->GravitySpin->value())));
 
     //--- Output names
     std::string OutputName = ui->FileNameEdit->text().toStdString();
 
     //--- Create solver object
-//    Solver = new BEMUse::Aerodynamic_Solver();
     Solver = new BEMUse::Hydrodynamic_Radiation_Solver();
 
     //--- Set solver parameters
-    Solver->Set_Flags(SimFlags);
-    Solver->Set_Reals(Betas);
-    Solver->Set_Ints(SimInts);
-    Solver->Set_Environment(EnvVars);
+    Solver->Set_Parameters(Params);
     Solver->Set_OutputFilePath(OutputName);
 
     //--- Pass this object to the MainWindown

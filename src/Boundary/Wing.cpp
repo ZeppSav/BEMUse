@@ -7,6 +7,22 @@
 namespace BEMUse
 {
 
+// Parameter specification
+
+void Wing::Set_Parameters(std::vector<Parameter> &Params)
+{
+    // This sets the parameters for the geometry and simulation
+    StdAppend(Parameters, Params);
+    for (Parameter P : Parameters)
+    {
+        if (P.myNameis("Span"))             Span = P.Get_Param<Real>();
+        if (P.myNameis("BaselineChord"))    C = P.Get_Param<Real>();
+        if (P.myNameis("Cosine_Disc"))      Cosine = P.Get_Param<bool>();
+        if (P.myNameis("NPanels_Span"))     NS = P.Get_Param<int>();
+        if (P.myNameis("NPanels_Chord"))    NC = P.Get_Param<int>();
+    }
+}
+
 //--- Geometry functions
 
 void Wing::SetSpan()
