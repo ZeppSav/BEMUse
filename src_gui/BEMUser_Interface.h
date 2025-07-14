@@ -69,7 +69,7 @@ public:
     {
         QString result;
         timestamp_t t0 = get_timestamp();               // Begin clock
-        for (int i=0; i<FreqList.size(); i++)
+        for (size_t i=0; i<FreqList.size(); i++)
         {
             Solver->Set_Real(FreqList[i]);
             Solver->Solve();

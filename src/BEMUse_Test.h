@@ -87,7 +87,7 @@ public:
 
         // Set up solver
         Solver = new BEMUse::Aerodynamic_Solver();
-        // Solver->Set_Flags(SolverFlags);
+        Solver->Set_Parameters(Params);
         Solver->Setup(Geometry);
 
         // // Extract out surfaces and BC nodes

@@ -169,9 +169,8 @@ void Aerodynamic_Solver::Solve_Steady()
     X = rPPLU.solve(S);     // Specify perturbation potential
     // X = GMRES.solve(S);     // Specify perturbation potential
 
-    // Store solution on panels
-    for (int i=0; i<NPTOT; i++) Body_Panels[i]->Get_Geo()->Centroid->VWeight(0) = X(i); // Constant strength
-    // BodySurface->
+    // Store solution on given nodes
+    for (size_t i=0; i<size(BC_Nodes); i++) BC_Nodes[i]->VWeight(0) = X(i);
 }
 
 }
