@@ -71,12 +71,12 @@ void Solver::Specify_BC_Linear_Pans(Boundary *B)
 void Solver::Specify_BC_Positions()
 {
     // The positions where the boundary conditions are being evaluated are specified.
-    Real F = 1e-5;     // Displacement factor
+    // The factor BCF should be changed depending on where the BIE Boundary conditions are evaluted
 
     for (size_t i=0; i<size(BC_Nodes); i++){
         Vector3 P = BC_Nodes[i]->Position_Global();
         Vector3 Z = BC_Nodes[i]->Z_Axis_Global();
-        BC_Pos.push_back(P+F*Z);
+        BC_Pos.push_back(P+BCF*Z);
     }
 
     BC = Matrix::Zero(size(BC_Nodes),1);

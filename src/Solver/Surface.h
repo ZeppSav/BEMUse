@@ -92,8 +92,6 @@ public:
     // Visualisation
     bool OutputWaveHeight = false;
     void Export_VTP();
-    void Export_VTP_Constant();
-    void Export_VTP_Bilinear();
 };
 
 

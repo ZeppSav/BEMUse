@@ -52,6 +52,7 @@ protected:
     DistType PanelDist = CONSTANT;          // What type of distribution is being used on the panels?
 
     //--- Solver vars
+    Real BCF = 1.e-5;               // Boundary condition shifting factor.
     int NPTOT;                      // Total number of panels in the system
     int NNTOT;                      // Total number of surface points (on which the Green's second identitity is solved)
 

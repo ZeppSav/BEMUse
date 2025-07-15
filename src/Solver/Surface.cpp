@@ -412,54 +412,66 @@ static int const vtiWidth = 11;        // Width for parsing low precision number
 void Surface::Export_VTP()
 {
     //--- Generate a vtp file of the gemetry
+    // For each panel, the individual nod positions are exported and
 
-    if (PanDist==CONSTANT)  Export_VTP_Constant();
-    if (PanDist==BILINEAR)  Export_VTP_Bilinear();
-    // Export_VTP_Bilinear();
-
-}
-
-void Surface::Export_VTP_Constant()
-{
-    //--- Generate a vtp file of the gemetry
-
-    // This essentially does the same thing as the case for the blinear panels, except that additional nodes are
-    // created for constant strength panels
-
-    std::vector<Vector3> VNodes;        // Corner nodes of each panel
-    std::vector<int> Connect;           // Connectivity
-    std::vector<Real> Sigma;            // Panel strength
+    // Generate array of nodal positions and panel offsets
+    std::vector<Vector3> VNodes;
+    std::vector<int> Offsets;
     int NCount = 0;
     for (int i=0; i<NP; i++){
         SP_Geo G = Panels[i]->Get_Geo();
-        // SP_Node N1, N2, N3, N4;
-        SP_Node N1 = G->Get_Node(0);
-        SP_Node N2 = G->Get_Node(1);
-        SP_Node N3 = G->Get_Node(2);
-        // if (G->Get_Type()==QUAD) N4 = G->Get_Node(3);
-
-        VNodes.push_back(N1->Position_Global());
-        VNodes.push_back(N2->Position_Global());
-        VNodes.push_back(N3->Position_Global());
-
-        Sigma.push_back(G->Centroid->VWeight(0));
-        Sigma.push_back(G->Centroid->VWeight(0));
-        Sigma.push_back(G->Centroid->VWeight(0));
-
         if (G->Get_Type()==TRI){
+            VNodes.push_back(G->Get_Node(0)->Position_Global());
+            VNodes.push_back(G->Get_Node(1)->Position_Global());
+            VNodes.push_back(G->Get_Node(2)->Position_Global());
             NCount += 3;
         }
         if (G->Get_Type()==QUAD){
-            SP_Node N4 = G->Get_Node(3);
-            VNodes.push_back(N4->Position_Global());
-            Sigma.push_back(G->Centroid->VWeight(0));
+            VNodes.push_back(G->Get_Node(0)->Position_Global());
+            VNodes.push_back(G->Get_Node(1)->Position_Global());
+            VNodes.push_back(G->Get_Node(2)->Position_Global());
+            VNodes.push_back(G->Get_Node(3)->Position_Global());
             NCount += 4;
         }
-
-        Connect.push_back(NCount);
-
-        // Connect
+        Offsets.push_back(NCount);
     }
+
+    // Generate array of panel surface strengths
+    std::vector<Real> Sigma;
+    if (PanDist==CONSTANT){
+        for (int i=0; i<NP; i++){
+            SP_Geo G = Panels[i]->Get_Geo();
+            if (G->Get_Type()==TRI) {
+                Sigma.push_back(G->Centroid->VWeight(0));
+                Sigma.push_back(G->Centroid->VWeight(0));
+                Sigma.push_back(G->Centroid->VWeight(0));
+            }
+            if (G->Get_Type()==QUAD) {
+                Sigma.push_back(G->Centroid->VWeight(0));
+                Sigma.push_back(G->Centroid->VWeight(0));
+                Sigma.push_back(G->Centroid->VWeight(0));
+                Sigma.push_back(G->Centroid->VWeight(0));
+            }
+        }
+    }
+    if (PanDist==BILINEAR){
+        for (int i=0; i<NP; i++){
+            SP_Geo G = Panels[i]->Get_Geo();
+            if (G->Get_Type()==TRI) {
+                Sigma.push_back(Nodes[G->Get_Node(0)->ID]->VWeight(0));
+                Sigma.push_back(Nodes[G->Get_Node(1)->ID]->VWeight(0));
+                Sigma.push_back(Nodes[G->Get_Node(2)->ID]->VWeight(0));
+            }
+            if (G->Get_Type()==QUAD) {
+                Sigma.push_back(Nodes[G->Get_Node(0)->ID]->VWeight(0));
+                Sigma.push_back(Nodes[G->Get_Node(1)->ID]->VWeight(0));
+                Sigma.push_back(Nodes[G->Get_Node(2)->ID]->VWeight(0));
+                Sigma.push_back(Nodes[G->Get_Node(3)->ID]->VWeight(0));
+            }
+        }
+    }
+
+    // Export
 
     CreateDirectory(OutputDirectory);   // Create directory if it doesn't yet exist
     // CreateDirectory(OutputPath);        // Create output file path if it doesn't yet exist
@@ -497,7 +509,7 @@ void Surface::Export_VTP_Constant()
 
     vtifile << "            <DataArray type='Int32' Name='offsets' format='ascii'>" << " \n";
     // for (int i=0; i<NP; i++)  vtifile << std::scientific  << std::setw(vtiWidth) << 3*(i+1);
-    for (size_t i=0; i<size(Connect); i++)  vtifile << std::scientific  << std::setw(vtiWidth) << Connect[i];
+    for (size_t i=0; i<size(Offsets); i++)  vtifile << std::scientific  << std::setw(vtiWidth) << Offsets[i];
     vtifile << "            </DataArray> "   << "\n";
 
 
@@ -510,7 +522,6 @@ void Surface::Export_VTP_Constant()
     //     vtifile << "                </DataArray>    "       << " \n";
     // }
     vtifile << "                <DataArray type='Float32' Name='node_scalar' format='ascii'>"    << "\n";
-    // for (int i=0; i<NN; i++)  vtifile << std::scientific << std::setw(vtiWidth) << Nodes[i]->VWeight(0);
     for (size_t i=0; i<size(Sigma); i++)  vtifile << std::scientific  << std::setw(vtiWidth) << Sigma[i];
     vtifile << "                </DataArray>    "       << " \n";
     vtifile << "           </PointData> "   << " \n";
@@ -521,89 +532,6 @@ void Surface::Export_VTP_Constant()
     vtifile.close();
 
     std::cout << "Boundary solution (constant panel strength) has been exportet in .vti format to: " << FilePath << std::endl;
-
-}
-
-void Surface::Export_VTP_Bilinear()
-{
-    //--- Generate a vtp file of the gemetry
-
-    CreateDirectory(OutputDirectory);   // Create directory if it doesn't yet exist
-    // CreateDirectory(OutputPath);        // Create output file path if it doesn't yet exist
-
-    std::string FilePath = OutputPath + SurfaceName + "_" + std::to_string(currentTimeStep) + ".vtp";
-    std::cout << FilePath << std::endl;
-    std::ofstream vtifile( FilePath.c_str() );
-    vtifile.precision(vtiPrecision);
-    if(!vtifile.is_open())
-    {
-        std::cerr << "ERROR: cannot open vtifile." << std::endl;
-        return;
-    }
-
-    vtifile << "<?xml version='1.0'?>" << "\n";
-    vtifile << "<VTKFile type='PolyData' version='0.1' byte_order='LittleEndian'>" << "\n";
-    vtifile << "  <PolyData>"   << "\n";
-    vtifile << "    <Piece NumberOfPoints='" << NN << "' NumberOfPolys='" << NP << "'> " << "\n";
-    vtifile << "        <Points> "   << "\n";
-    vtifile << "            <DataArray type='Float32' NumberOfComponents='3' format='ascii'>" << " \n";
-    for (int i=0; i<NN; i++){
-        Vector3 P = Nodes[i]->Position_Global();
-        if (fabs(purtEta(i))>100.) purtEta(i) = 0.0;
-        vtifile << std::scientific << std::setw(vtiWidth) << P(0) << std::setw(vtiWidth) << P(1) << std::setw(vtiWidth) << P(2)+purtEta(i);
-    }
-    vtifile << "            </DataArray> "   << "\n";
-    vtifile << "        </Points> "   << "\n";
-
-    vtifile << "        <Polys>"   << "\n";
-    vtifile << "            <DataArray type='Int32' Name='connectivity' format='ascii'>" << " \n";
-    std::vector<int> offsets;
-    int offsetcount = 0;
-    for (int i=0; i<NP; i++){
-        if (Panels[i]->Get_Type()==TRI){
-            vtifile << std::scientific  << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(0)->ID
-                    << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(1)->ID
-                    << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(2)->ID;
-            offsetcount += 3;
-            offsets.push_back(offsetcount);
-        }
-        if (Panels[i]->Get_Type()==QUAD){
-            vtifile << std::scientific  << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(0)->ID
-                    << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(1)->ID
-                    << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(2)->ID
-                    << std::setw(vtiWidth) << Panels[i]->Get_Geo()->Get_Node(3)->ID;
-            offsetcount += 4;
-            offsets.push_back(offsetcount);
-        }
-    }
-    vtifile << "            </DataArray> "   << "\n";
-
-    vtifile << "            <DataArray type='Int32' Name='offsets' format='ascii'>" << " \n";
-    // for (int i=0; i<NP; i++)  vtifile << std::scientific  << std::setw(vtiWidth) << 3*(i+1);
-    for (int i=0; i<NP; i++)  vtifile << std::scientific  << std::setw(vtiWidth) << offsets[i];
-    vtifile << "            </DataArray> "   << "\n";
-
-
-    vtifile << "        </Polys>"   << "\n";
-
-    vtifile << "            <PointData Scalars='node_scalar'>"   << "\n";
-    if (OutputWaveHeight){
-        vtifile << "                <DataArray type='Float32' Name='wave_height' format='ascii'>"    << "\n";
-        for (int i=0; i<NN; i++)  vtifile << std::scientific << std::setw(vtiWidth) << purtEta(i);
-        vtifile << "                </DataArray>    "       << " \n";
-    }
-    vtifile << "                <DataArray type='Float32' Name='node_scalar' format='ascii'>"    << "\n";
-    for (int i=0; i<NN; i++)  vtifile << std::scientific << std::setw(vtiWidth) << Nodes[i]->VWeight(0);
-    vtifile << "                </DataArray>    "       << " \n";
-    vtifile << "           </PointData> "   << " \n";
-
-    vtifile << "        </Piece>   "       << " \n";
-    vtifile << "    </PolyData>  "       << " \n";
-    vtifile << "</VTKFile> "           << " \n";
-    vtifile.close();
-
-    std::cout << "Boundary solution (bilinear panel strength) has been exportet in .vti format to: " << FilePath << std::endl;
-
 }
 
 }

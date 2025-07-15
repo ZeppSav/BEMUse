@@ -78,9 +78,9 @@ void Aerodynamic_Solver::Prepare_Linear_System_Bilinear()
             G(R, sid2) += s2;
             G(R, sid3) += s3;
 
-            H(R, sid1) += d1;
-            H(R, sid2) += d2;
-            H(R, sid3) += d3;
+            H(R, sid1) -= d1;
+            H(R, sid2) -= d2;
+            H(R, sid3) -= d3;
 
             // Debugging flag:
             // if (std::isnan(s1) || std::isnan(s2) || std::isnan(s3) || std::isnan(d1) || std::isnan(d2) || std::isnan(d3)){
@@ -129,8 +129,11 @@ void Aerodynamic_Solver::Setup(Boundary *B)
     Create_Panels(B);
 
     // Specify parameters for Boundary conditions
+    // NB: Body_Panels (&their centroids) are oriented such that their normal points into the body
+    // Body_Nodes however are constructed to point out of the body. This must be accounted for with the BCF factor.
     if (PanelDist==CONSTANT)  {for (size_t i=0; i<NPTOT; i++) BC_Nodes.push_back(Body_Panels[i]->Get_Geo()->Centroid);}
     if (PanelDist==BILINEAR)  {StdAppend(BC_Nodes,Body_Nodes);}
+    if (PanelDist==BILINEAR)  BCF = -1.e-5;        // Shift normals for BCPos & BC inwards
     Specify_BC_Positions();
 
     // Prepare Linear System
@@ -153,9 +156,11 @@ void Aerodynamic_Solver::Set_External_BC(std::vector<Vector3> &Vels)
         return;
     }
 
+    Real sgnBCF = BCF/fabs(BCF);
+
     OpenMPfor
     for (size_t i=0; i<size(BC_Nodes); i++){
-        Vector3 Z = BC_Nodes[i]->Z_Axis_Global();
+        Vector3 Z = sgnBCF*BC_Nodes[i]->Z_Axis_Global();
         BC(i) = Vels[i].dot(Z);
     }
 }
@@ -165,11 +170,12 @@ void Aerodynamic_Solver::Solve_Steady()
 {
     //--- This carries out the solve for the previously specified BC.
 
-    S = G*BC;               // Specify source strength
-    X = rPPLU.solve(S);     // Specify perturbation potential
-    // X = GMRES.solve(S);     // Specify perturbation potential
+    S = G*BC;                   // Specify source strength
+    X = rPPLU.solve(S);         // Specify perturbation potential
+    // X = GMRES.solve(S);      // Specify perturbation potential
 
     // Store solution on given nodes
+    // for (size_t i=0; i<size(BC_Nodes); i++) BC_Nodes[i]->VWeight(0) = X(i);
     for (size_t i=0; i<size(BC_Nodes); i++) BC_Nodes[i]->VWeight(0) = X(i);
 }
 
